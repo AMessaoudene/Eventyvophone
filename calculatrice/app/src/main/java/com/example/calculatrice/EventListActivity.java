@@ -3,6 +3,8 @@ package com.example.calculatrice;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,6 +41,23 @@ public class EventListActivity extends AppCompatActivity {
             Intent intent = new Intent(this, EventDetailActivity.class);
             intent.putExtra("eventId", event.id);
             startActivity(intent);
+        });
+
+        // bottom nav
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.nav_events);
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                startActivity(new Intent(this, DashboardActivity.class).putExtra("userId", userId));
+                overridePendingTransition(0,0);
+                return true;
+            } else if (id == R.id.nav_profile) {
+                startActivity(new Intent(this, MainActivity.class));
+                overridePendingTransition(0,0);
+                return true;
+            }
+            return true;
         });
     }
 }

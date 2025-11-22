@@ -7,21 +7,38 @@ import androidx.room.PrimaryKey;
 public class EventEntity {
     @PrimaryKey(autoGenerate = true)
     public long id;
+
     public String name;
-    public String date;
-    public String location;
+    public String startDate;
+    public String endDate;
+    public String location;   // used when offline
+    public String meetLink;   // used when online
     public boolean isOnline;
     public boolean isFree;
+    public String description;
     public String imageUri;
     public long organizerId;
 
-    public EventEntity(String name, String date, String location,
-                       boolean isOnline, boolean isFree, String imageUri, long organizerId) {
+    public EventEntity(
+            String name,
+            String startDate,
+            String endDate,
+            String location,
+            String meetLink,
+            boolean isOnline,
+            boolean isFree,
+            String description,
+            String imageUri,
+            long organizerId
+    ) {
         this.name = name;
-        this.date = date;
+        this.startDate = startDate;
+        this.endDate = endDate;
         this.location = location;
+        this.meetLink = meetLink;
         this.isOnline = isOnline;
         this.isFree = isFree;
+        this.description = description;
         this.imageUri = imageUri;
         this.organizerId = organizerId;
     }

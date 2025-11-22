@@ -36,7 +36,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
     public void onBindViewHolder(VH holder, int position) {
         EventEntity e = data.get(position);
         holder.tvName.setText(e.name);
-        holder.tvMeta.setText(e.date + " • " + e.location + (e.isOnline ? " • Online" : ""));
+
+        String meta = e.startDate;
+        if (e.endDate != null && !e.endDate.isEmpty()) meta += " - " + e.endDate;
+        meta += " • ";
+        meta += (e.isOnline ? "Online" : (e.location != null ? e.location : "Offline"));
+        holder.tvMeta.setText(meta);
+
         if (e.imageUri != null && !e.imageUri.isEmpty()) {
             try { holder.img.setImageURI(Uri.parse(e.imageUri)); }
             catch (Exception ex) { holder.img.setImageResource(android.R.drawable.ic_menu_report_image); }
