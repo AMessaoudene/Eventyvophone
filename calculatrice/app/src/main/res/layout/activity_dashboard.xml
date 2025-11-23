@@ -86,6 +86,14 @@
                 android:gravity="top"
                 android:layout_marginTop="16dp" />
 
+            <CheckBox
+                android:id="@+id/cbParticipationForm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Include Participation Form"
+                android:layout_marginTop="8dp"/>
+
+
             <Button
                 android:id="@+id/btnPickPhoto"
                 android:layout_width="match_parent"

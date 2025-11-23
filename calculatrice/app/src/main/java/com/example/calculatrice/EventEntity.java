@@ -11,26 +11,19 @@ public class EventEntity {
     public String name;
     public String startDate;
     public String endDate;
-    public String location;   // used when offline
-    public String meetLink;   // used when online
+    public String location;
+    public String meetLink;
     public boolean isOnline;
     public boolean isFree;
     public String description;
     public String imageUri;
     public long organizerId;
+    public boolean hasParticipationForm;
 
-    public EventEntity(
-            String name,
-            String startDate,
-            String endDate,
-            String location,
-            String meetLink,
-            boolean isOnline,
-            boolean isFree,
-            String description,
-            String imageUri,
-            long organizerId
-    ) {
+    public EventEntity(String name, String startDate, String endDate,
+                       String location, String meetLink, boolean isOnline,
+                       boolean isFree, String description, String imageUri,
+                       long organizerId, boolean hasParticipationForm) {
         this.name = name;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -41,5 +34,6 @@ public class EventEntity {
         this.description = description;
         this.imageUri = imageUri;
         this.organizerId = organizerId;
+        this.hasParticipationForm = hasParticipationForm;
     }
 }
