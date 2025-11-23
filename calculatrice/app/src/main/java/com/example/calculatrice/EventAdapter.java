@@ -15,16 +15,28 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     private List<EventEntity> data;
     private OnItemClickListener listener;
+    private OnItemLongClickListener longListener;
 
     public interface OnItemClickListener {
         void onItemClick(EventEntity event);
+    }
+
+    public interface OnItemLongClickListener {
+        void onItemLongClick(EventEntity event);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 
+    public void setOnItemLongClickListener(OnItemLongClickListener l) { this.longListener = l; }
+
     public EventAdapter(List<EventEntity> data) { this.data = data; }
+
+    public void setData(List<EventEntity> newData) {
+        this.data = newData;
+        notifyDataSetChanged();
+    }
 
     @Override
     public VH onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -53,10 +65,18 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(e);
         });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longListener != null) {
+                longListener.onItemLongClick(e);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
-    public int getItemCount() { return data.size(); }
+    public int getItemCount() { return data == null ? 0 : data.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView img;

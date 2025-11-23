@@ -1,6 +1,7 @@
 package com.example.calculatrice;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -35,6 +36,9 @@ public class LoginActivity extends AppCompatActivity {
 
         User user = db.userDao().login(username, password);
         if (user != null) {
+            SharedPreferences sp = getSharedPreferences("auth", MODE_PRIVATE);
+            sp.edit().putLong("userId", user.id).apply();
+
             Intent intent = new Intent(this, DashboardActivity.class);
             intent.putExtra("userId", user.id);
             startActivity(intent);

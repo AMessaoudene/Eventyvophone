@@ -26,8 +26,8 @@ public interface EventDao {
 
     @Query("UPDATE events SET name = :name, startDate = :startDate, endDate = :endDate," +
             " location = :location, meetLink = :meetLink, isOnline = :isOnline, isFree = :isFree," +
-            " description = :description, hasParticipationForm = :hasParticipationForm WHERE id = :id")
+            " description = :description, hasParticipationForm = :hasParticipationForm, imageUri = :imageUri WHERE id = :id")
     void update(long id, String name, String startDate, String endDate,
                 String location, String meetLink, boolean isOnline, boolean isFree,
-                String description, boolean hasParticipationForm);
+                String description, boolean hasParticipationForm, String imageUri);
 }

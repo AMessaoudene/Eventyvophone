@@ -43,7 +43,6 @@ public class EventListActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // bottom nav
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_events);
         bottomNav.setOnItemSelectedListener(item -> {
@@ -53,7 +52,7 @@ public class EventListActivity extends AppCompatActivity {
                 overridePendingTransition(0,0);
                 return true;
             } else if (id == R.id.nav_profile) {
-                startActivity(new Intent(this, MainActivity.class));
+                startActivity(new Intent(this, ProfileActivity.class));
                 overridePendingTransition(0,0);
                 return true;
             }

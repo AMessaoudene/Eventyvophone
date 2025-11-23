@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/etEventName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Event Name" />
+
+        <EditText
+            android:id="@+id/etStartDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Start Date" />
+
+        <EditText
+            android:id="@+id/etEndDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="End Date" />
+
+        <EditText
+            android:id="@+id/etEventLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Location" />
+
+        <EditText
+            android:id="@+id/etMeetLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Meet Link"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbOnline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Online Event"/>
+
+        <CheckBox
+            android:id="@+id/cbFreeEntry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Free Entry"/>
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:minLines="3"/>
+
+        <CheckBox
+            android:id="@+id/cbParticipationForm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Include Participation Form"/>
+
+        <Button
+            android:id="@+id/btnPickPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select Image"/>
+
+        <ImageView
+            android:id="@+id/imgPreview"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:background="#DDDDDD"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/btnCreateEvent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Create Event"
+            android:layout_marginTop="12dp"/>
+    </LinearLayout>
+</ScrollView>
