@@ -31,5 +31,19 @@
             android:text="date • location"
             android:layout_marginTop="4dp"/>
 
+        <TextView
+            android:id="@+id/item_participation_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Participation"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginTop="6dp"
+            android:background="#3F51B5"/>
+
     </LinearLayout>
 </LinearLayout>

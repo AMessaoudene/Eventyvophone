@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
@@ -24,7 +25,14 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
         this.listener = listener;
     }
 
-    public EventAdapter(List<EventEntity> data) { this.data = data; }
+    public EventAdapter(List<EventEntity> data) {
+        this.data = data != null ? data : new ArrayList<>();
+    }
+
+    public void updateData(List<EventEntity> newData) {
+        this.data = newData != null ? newData : new ArrayList<>();
+        notifyDataSetChanged();
+    }
 
     @Override
     public VH onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -50,23 +58,33 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
             holder.img.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
+        holder.tvParticipation.setVisibility(View.VISIBLE);
+        if (e.hasParticipationForm) {
+            holder.tvParticipation.setText("Participation form open");
+        } else if (e.isFree) {
+            holder.tvParticipation.setText("Free entry");
+        } else {
+            holder.tvParticipation.setText("Paid event");
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(e);
         });
     }
 
     @Override
-    public int getItemCount() { return data.size(); }
+    public int getItemCount() { return data == null ? 0 : data.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView img;
-        TextView tvName, tvMeta;
+        TextView tvName, tvMeta, tvParticipation;
 
         VH(View itemView) {
             super(itemView);
             img = itemView.findViewById(R.id.item_img);
             tvName = itemView.findViewById(R.id.item_name);
             tvMeta = itemView.findViewById(R.id.item_meta);
+            tvParticipation = itemView.findViewById(R.id.item_participation_badge);
         }
     }
 }

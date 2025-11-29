@@ -90,6 +90,43 @@
                 android:textSize="16sp"
                 android:layout_marginTop="12dp"/>
 
+            <TextView
+                android:id="@+id/tvParticipationStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Participation status"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp"/>
+
+            <Button
+                android:id="@+id/btnParticipate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Participate"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="#009688"
+                android:textColor="#FFFFFF"/>
+
+            <Button
+                android:id="@+id/btnEditEvent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Edit Event"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="#3F51B5"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/btnDeleteEvent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Delete Event"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="#F44336"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"/>
+
         </LinearLayout>
     </ScrollView>
 

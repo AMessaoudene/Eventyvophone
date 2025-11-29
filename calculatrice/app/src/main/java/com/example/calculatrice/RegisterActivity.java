@@ -1,0 +1,81 @@
+package com.example.calculatrice;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    private EditText etUsername;
+    private EditText etPassword;
+    private EditText etConfirmPassword;
+    private AppDatabase db;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        db = AppDatabase.getInstance(this);
+
+        etUsername = findViewById(R.id.etRegUsername);
+        etPassword = findViewById(R.id.etRegPassword);
+        etConfirmPassword = findViewById(R.id.etRegConfirmPassword);
+
+        Button btnCreate = findViewById(R.id.btnCreateAccount);
+        Button btnBackToLogin = findViewById(R.id.btnBackToLogin);
+
+        btnCreate.setOnClickListener(v -> register());
+        btnBackToLogin.setOnClickListener(v -> {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        });
+    }
+
+    private void register() {
+        String username = etUsername.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+        String confirm = etConfirmPassword.getText().toString().trim();
+
+        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirm)) {
+            Toast.makeText(this, "Fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (username.length() < 4) {
+            Toast.makeText(this, "Username must be at least 4 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (password.length() < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!password.equals(confirm)) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        User existing = db.userDao().findByUsername(username);
+        if (existing != null) {
+            Toast.makeText(this, "Username already taken", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        long userId = db.userDao().insert(new User(username, password));
+        User created = db.userDao().getById(userId);
+        SessionManager.saveUser(this, created);
+        Toast.makeText(this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, DashboardActivity.class);
+        intent.putExtra("userId", userId);
+        startActivity(intent);
+        finishAffinity();
+    }
+}
+

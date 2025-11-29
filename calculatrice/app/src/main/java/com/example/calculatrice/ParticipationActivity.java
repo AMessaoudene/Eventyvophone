@@ -3,14 +3,18 @@ package com.example.calculatrice;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class ParticipationActivity extends AppCompatActivity {
 
-    EditText fullName, email, phone, note;
-    Button btnSubmit;
+    private EditText fullName;
+    private EditText email;
+    private EditText phone;
+    private EditText note;
+    private TextView tvEventTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,20 +25,33 @@ public class ParticipationActivity extends AppCompatActivity {
         email = findViewById(R.id.etEmail);
         phone = findViewById(R.id.etPhone);
         note = findViewById(R.id.etNote);
-        btnSubmit = findViewById(R.id.btnSubmit);
+        tvEventTitle = findViewById(R.id.tvEventTitle);
+        Button btnSubmit = findViewById(R.id.btnSubmit);
 
-        btnSubmit.setOnClickListener(v -> {
-            String fn = fullName.getText().toString().trim();
-            String em = email.getText().toString().trim();
+        String eventName = getIntent().getStringExtra("eventName");
+        if (eventName != null) {
+            tvEventTitle.setText(eventName);
+        }
 
-            if (fn.isEmpty() || em.isEmpty()) {
-                Toast.makeText(this, "Please enter name and email", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        btnSubmit.setOnClickListener(v -> handleSubmit(eventName));
+    }
 
-            // For now just show toast. You can save to DB or send to server later.
-            Toast.makeText(this, "Thanks " + fn + ", your participation is recorded.", Toast.LENGTH_SHORT).show();
-            finish();
-        });
+    private void handleSubmit(String eventName) {
+        String fn = fullName.getText().toString().trim();
+        String em = email.getText().toString().trim();
+
+        if (fn.isEmpty() || em.isEmpty()) {
+            Toast.makeText(this, "Please enter name and email", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String message = "Thanks " + fn + ", your participation";
+        if (eventName != null) {
+            message += " for " + eventName;
+        }
+        message += " is recorded.";
+
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        finish();
     }
 }
