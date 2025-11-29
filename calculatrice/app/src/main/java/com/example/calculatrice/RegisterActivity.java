@@ -15,6 +15,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etPassword;
     private EditText etConfirmPassword;
     private AppDatabase db;
+    private boolean redirectToProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +23,7 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         db = AppDatabase.getInstance(this);
+        redirectToProfile = getIntent().getBooleanExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, false);
 
         etUsername = findViewById(R.id.etRegUsername);
         etPassword = findViewById(R.id.etRegPassword);
@@ -32,7 +34,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         btnCreate.setOnClickListener(v -> register());
         btnBackToLogin.setOnClickListener(v -> {
-            startActivity(new Intent(this, LoginActivity.class));
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, redirectToProfile);
+            startActivity(intent);
             finish();
         });
     }
@@ -72,9 +76,14 @@ public class RegisterActivity extends AppCompatActivity {
         User created = db.userDao().getById(userId);
         SessionManager.saveUser(this, created);
         Toast.makeText(this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, DashboardActivity.class);
-        intent.putExtra("userId", userId);
-        startActivity(intent);
+
+        if (redirectToProfile) {
+            startActivity(new Intent(this, ProfileActivity.class));
+        } else {
+            Intent intent = new Intent(this, DashboardActivity.class);
+            intent.putExtra("userId", userId);
+            startActivity(intent);
+        }
         finishAffinity();
     }
 }

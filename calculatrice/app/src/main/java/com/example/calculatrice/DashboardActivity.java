@@ -141,8 +141,11 @@ public class DashboardActivity extends AppCompatActivity {
                         .putExtra("onlyMine", true));
                 return true;
             } else if (id == R.id.nav_profile) {
-                if (SessionManager.getUserId(this) == -1L) {
-                    startActivity(new Intent(this, LoginActivity.class));
+                long loggedId = SessionManager.getUserId(this);
+                if (loggedId == -1L) {
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
+                    startActivity(intent);
                 } else {
                     startActivity(new Intent(this, ProfileActivity.class));
                 }

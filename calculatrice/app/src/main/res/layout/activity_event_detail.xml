@@ -108,6 +108,16 @@
                 android:textColor="#FFFFFF"/>
 
             <Button
+                android:id="@+id/btnManageParticipation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Manage participation"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#607D8B"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"/>
+
+            <Button
                 android:id="@+id/btnEditEvent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
