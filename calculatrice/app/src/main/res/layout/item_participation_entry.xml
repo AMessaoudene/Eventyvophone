@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="space_between">
+        android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/tvParticipantName"
@@ -26,8 +26,8 @@
         <TextView
             android:id="@+id/tvParticipantStatus"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="PENDING"
+            android:layout_height="wrap_content"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -84,4 +84,3 @@
     </LinearLayout>
 
 </LinearLayout>
-

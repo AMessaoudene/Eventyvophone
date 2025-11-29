@@ -124,7 +124,9 @@ public class EditEventActivity extends AppCompatActivity {
         String meet = online ? etMeetLink.getText().toString().trim() : null;
         boolean free = cbFree.isChecked();
         boolean participation = cbParticipationForm.isChecked();
+        String imageUriStr = (selectedImageUri != null) ? selectedImageUri.toString() : current.imageUri;
 
+        // Validate required fields
         if (name.isEmpty() || start.isEmpty() || end.isEmpty() || desc.isEmpty() ||
                 (online && (meet == null || meet.isEmpty())) ||
                 (!online && (location == null || location.isEmpty()))) {
@@ -132,9 +134,19 @@ public class EditEventActivity extends AppCompatActivity {
             return;
         }
 
-        String imageUriStr = (selectedImageUri != null) ? selectedImageUri.toString() : current.imageUri;
+        // Create updated EventEntity
+        EventEntity updated = new EventEntity(
+                name, start, end,
+                location, meet,
+                online, free,
+                desc, imageUriStr,
+                current.organizerId, participation
+        );
+        updated.id = eventId; // Set the ID so Room knows which row to update
 
-        db.eventDao().update(eventId, name, start, end, location, meet, online, free, desc, participation, imageUriStr);
+        // Update in DB
+        db.eventDao().update(updated);
+
         Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
         finish();
     }
