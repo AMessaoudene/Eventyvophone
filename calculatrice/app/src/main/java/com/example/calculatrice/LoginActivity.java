@@ -11,9 +11,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
+    public static final String EXTRA_REDIRECT_TO_PROFILE = "redirect_to_profile";
+
     private EditText etUsername;
     private EditText etPassword;
     private AppDatabase db;
+    private boolean redirectToProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         db = AppDatabase.getInstance(this);
+        redirectToProfile = getIntent().getBooleanExtra(EXTRA_REDIRECT_TO_PROFILE, false);
 
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);
@@ -28,8 +32,18 @@ public class LoginActivity extends AppCompatActivity {
         Button btnRegister = findViewById(R.id.btnRegister);
 
         btnLogin.setOnClickListener(v -> login());
-        btnRegister.setOnClickListener(v ->
-                startActivity(new Intent(this, RegisterActivity.class)));
+        btnRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RegisterActivity.class);
+            intent.putExtra(EXTRA_REDIRECT_TO_PROFILE, redirectToProfile);
+            startActivity(intent);
+        });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        redirectToProfile = intent.getBooleanExtra(EXTRA_REDIRECT_TO_PROFILE, false);
     }
 
     @Override
@@ -37,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         long existingUserId = SessionManager.getUserId(this);
         if (existingUserId != -1L) {
-            navigateToDashboard(existingUserId);
+            navigateAfterAuth(existingUserId);
             finish();
         }
     }
@@ -54,16 +68,20 @@ public class LoginActivity extends AppCompatActivity {
         User user = db.userDao().login(username, password);
         if (user != null) {
             SessionManager.saveUser(this, user);
-            navigateToDashboard(user.id);
+            navigateAfterAuth(user.id);
             finish();
         } else {
             Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void navigateToDashboard(long userId) {
-        Intent intent = new Intent(this, DashboardActivity.class);
-        intent.putExtra("userId", userId);
-        startActivity(intent);
+    private void navigateAfterAuth(long userId) {
+        if (redirectToProfile) {
+            startActivity(new Intent(this, ProfileActivity.class));
+        } else {
+            Intent intent = new Intent(this, DashboardActivity.class);
+            intent.putExtra("userId", userId);
+            startActivity(intent);
+        }
     }
 }

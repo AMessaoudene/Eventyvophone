@@ -17,7 +17,9 @@ public class ProfileActivity extends AppCompatActivity {
 
         long userId = SessionManager.getUserId(this);
         if (userId == -1L) {
-            startActivity(new Intent(this, LoginActivity.class));
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
+            startActivity(intent);
             finish();
             return;
         }

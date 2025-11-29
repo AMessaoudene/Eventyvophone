@@ -6,13 +6,14 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {User.class, EventEntity.class}, version = 4, exportSchema = false)
+@Database(entities = {User.class, EventEntity.class, ParticipationEntity.class}, version = 6, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static volatile AppDatabase instance;
 
     public abstract UserDao userDao();
     public abstract EventDao eventDao();
+    public abstract ParticipationDao participationDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {

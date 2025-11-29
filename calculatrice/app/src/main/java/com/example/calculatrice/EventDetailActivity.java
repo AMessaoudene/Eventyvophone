@@ -14,17 +14,20 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.util.Locale;
+
 public class EventDetailActivity extends AppCompatActivity {
 
     private AppDatabase db;
     private EventEntity event;
+    private int participationCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_detail);
 
-        long eventId = getIntent().getLongExtra("eventId", -1);
+        long eventId = getIntent().getLongExtra("eventId", -1L);
         if (eventId == -1L) {
             finish();
             return;
@@ -37,8 +40,24 @@ public class EventDetailActivity extends AppCompatActivity {
             return;
         }
 
+        participationCount = db.participationDao().countForEvent(event.id);
+
         bindEventDetails();
         setupBottomNav();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (event != null) {
+            event = db.eventDao().getEventById(event.id);
+            if (event == null) {
+                finish();
+                return;
+            }
+            participationCount = db.participationDao().countForEvent(event.id);
+            bindEventDetails();
+        }
     }
 
     private void bindEventDetails() {
@@ -53,6 +72,7 @@ public class EventDetailActivity extends AppCompatActivity {
         TextView tvDescription = findViewById(R.id.tvDescription);
         TextView tvParticipation = findViewById(R.id.tvParticipationStatus);
         Button btnParticipate = findViewById(R.id.btnParticipate);
+        Button btnManage = findViewById(R.id.btnManageParticipation);
         Button btnEdit = findViewById(R.id.btnEditEvent);
         Button btnDelete = findViewById(R.id.btnDeleteEvent);
 
@@ -73,9 +93,15 @@ public class EventDetailActivity extends AppCompatActivity {
             tvLocation.setText("Location: " + (event.location == null ? "-" : event.location));
         }
 
-        tvParticipation.setText(event.hasParticipationForm ?
-                "Participation form is available for visitors." :
-                "Participation form is disabled.");
+        if (event.hasParticipationForm) {
+            String label = String.format(Locale.getDefault(),
+                    "Participation form open • %d response%s recorded",
+                    participationCount,
+                    participationCount == 1 ? "" : "s");
+            tvParticipation.setText(label);
+        } else {
+            tvParticipation.setText("Participation form is disabled.");
+        }
 
         if (event.imageUri != null && !event.imageUri.isEmpty()) {
             try {
@@ -92,6 +118,10 @@ public class EventDetailActivity extends AppCompatActivity {
 
         btnParticipate.setVisibility(event.hasParticipationForm ? View.VISIBLE : View.GONE);
         btnParticipate.setOnClickListener(v -> openParticipationForm());
+
+        boolean canManage = isOwner && event.hasParticipationForm;
+        btnManage.setVisibility(canManage ? View.VISIBLE : View.GONE);
+        btnManage.setOnClickListener(v -> openManageParticipation());
 
         btnEdit.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
@@ -110,6 +140,12 @@ public class EventDetailActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ParticipationActivity.class);
         intent.putExtra("eventId", event.id);
         intent.putExtra("eventName", event.name);
+        startActivity(intent);
+    }
+
+    private void openManageParticipation() {
+        Intent intent = new Intent(this, ParticipationManageActivity.class);
+        intent.putExtra("eventId", event.id);
         startActivity(intent);
     }
 
@@ -139,8 +175,11 @@ public class EventDetailActivity extends AppCompatActivity {
                 }
                 return true;
             } else if (id == R.id.nav_profile) {
-                if (SessionManager.getUserId(this) == -1L) {
-                    startActivity(new Intent(this, LoginActivity.class));
+                long userId = SessionManager.getUserId(this);
+                if (userId == -1L) {
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
+                    startActivity(intent);
                 } else {
                     startActivity(new Intent(this, ProfileActivity.class));
                 }
