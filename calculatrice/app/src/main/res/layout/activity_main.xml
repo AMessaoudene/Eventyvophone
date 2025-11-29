@@ -15,5 +15,12 @@
         android:id="@+id/btnLogin"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:text="Login / Register"/>
+        android:text="Login / Register"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btnBrowseEvents"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Browse Events"/>
 </LinearLayout>

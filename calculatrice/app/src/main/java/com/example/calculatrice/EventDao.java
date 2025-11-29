@@ -3,6 +3,7 @@ package com.example.calculatrice;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -24,10 +25,6 @@ public interface EventDao {
     @Query("DELETE FROM events WHERE id = :eventId")
     void delete(long eventId);
 
-    @Query("UPDATE events SET name = :name, startDate = :startDate, endDate = :endDate," +
-            " location = :location, meetLink = :meetLink, isOnline = :isOnline, isFree = :isFree," +
-            " description = :description, hasParticipationForm = :hasParticipationForm, imageUri = :imageUri WHERE id = :id")
-    void update(long id, String name, String startDate, String endDate,
-                String location, String meetLink, boolean isOnline, boolean isFree,
-                String description, boolean hasParticipationForm, String imageUri);
+    @Update
+    void update(EventEntity event);
 }

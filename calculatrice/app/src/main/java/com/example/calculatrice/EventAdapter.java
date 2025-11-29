@@ -9,32 +9,28 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     private List<EventEntity> data;
     private OnItemClickListener listener;
-    private OnItemLongClickListener longListener;
 
     public interface OnItemClickListener {
         void onItemClick(EventEntity event);
-    }
-
-    public interface OnItemLongClickListener {
-        void onItemLongClick(EventEntity event);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 
-    public void setOnItemLongClickListener(OnItemLongClickListener l) { this.longListener = l; }
+    public EventAdapter(List<EventEntity> data) {
+        this.data = data != null ? data : new ArrayList<>();
+    }
 
-    public EventAdapter(List<EventEntity> data) { this.data = data; }
-
-    public void setData(List<EventEntity> newData) {
-        this.data = newData;
+    public void updateData(List<EventEntity> newData) {
+        this.data = newData != null ? newData : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -62,16 +58,17 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
             holder.img.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
+        holder.tvParticipation.setVisibility(View.VISIBLE);
+        if (e.hasParticipationForm) {
+            holder.tvParticipation.setText("Participation form open");
+        } else if (e.isFree) {
+            holder.tvParticipation.setText("Free entry");
+        } else {
+            holder.tvParticipation.setText("Paid event");
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(e);
-        });
-
-        holder.itemView.setOnLongClickListener(v -> {
-            if (longListener != null) {
-                longListener.onItemLongClick(e);
-                return true;
-            }
-            return false;
         });
     }
 
@@ -80,13 +77,14 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView img;
-        TextView tvName, tvMeta;
+        TextView tvName, tvMeta, tvParticipation;
 
         VH(View itemView) {
             super(itemView);
             img = itemView.findViewById(R.id.item_img);
             tvName = itemView.findViewById(R.id.item_name);
             tvMeta = itemView.findViewById(R.id.item_meta);
+            tvParticipation = itemView.findViewById(R.id.item_participation_badge);
         }
     }
 }

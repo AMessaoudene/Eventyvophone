@@ -18,6 +18,14 @@
             android:textStyle="bold"
             android:layout_marginBottom="12dp"/>
 
+        <TextView
+            android:id="@+id/tvEventTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Event name"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
+
         <EditText
             android:id="@+id/etFullName"
             android:layout_width="match_parent"

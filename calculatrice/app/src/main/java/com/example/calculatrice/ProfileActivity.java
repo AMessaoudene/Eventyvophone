@@ -1,46 +1,49 @@
 package com.example.calculatrice;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class ProfileActivity extends AppCompatActivity {
-
-    TextView tvUsername;
-    Button btnLogout;
-    AppDatabase db;
-    long userId;
-    User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        db = AppDatabase.getInstance(this);
-
-        userId = getSharedPreferences("auth", MODE_PRIVATE).getLong("userId", -1);
-        if (userId == -1) {
+        long userId = SessionManager.getUserId(this);
+        if (userId == -1L) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
 
-        user = db.userDao().getById(userId); // we will add this DAO method
-        tvUsername = findViewById(R.id.tvProfileUsername);
-        btnLogout = findViewById(R.id.btnLogout);
+        AppDatabase db = AppDatabase.getInstance(this);
+        User user = db.userDao().getById(userId);
 
-        if (user != null) tvUsername.setText(user.username);
+        TextView tvUsername = findViewById(R.id.tvProfileUsername);
+        TextView tvUserId = findViewById(R.id.tvProfileId);
+        Button btnLogout = findViewById(R.id.btnLogout);
+
+        if (user != null) {
+            tvUsername.setText(user.username);
+            tvUserId.setText("User ID: " + user.id);
+        } else {
+            tvUsername.setText("Unknown user");
+            tvUserId.setText("");
+        }
 
         btnLogout.setOnClickListener(v -> {
-            SharedPreferences sp = getSharedPreferences("auth", MODE_PRIVATE);
-            sp.edit().remove("userId").apply();
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
+            SessionManager.clear(this);
+            Toast.makeText(this, "Signed out", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finishAffinity();
         });
     }
 }

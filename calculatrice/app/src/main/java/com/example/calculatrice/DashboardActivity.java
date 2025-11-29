@@ -1,31 +1,53 @@
 package com.example.calculatrice;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
-import android.widget.ProgressBar;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DashboardActivity extends AppCompatActivity {
 
-    private RecyclerView rvEvents;
-    private EventAdapter adapter;
-    private AppDatabase db;
+    private EditText etName;
+    private EditText etStartDate;
+    private EditText etEndDate;
+    private EditText etLocation;
+    private EditText etMeetLink;
+    private EditText etDescription;
+    private CheckBox cbOnline;
+    private CheckBox cbFree;
+    private CheckBox cbParticipationForm;
+    private Button btnPickPhoto;
+    private Button btnCreateOrUpdateEvent;
+    private Button btnShowEvents;
+    private Button btnDeleteEvent;
+    private ImageView imgPreview;
+    private Uri selectedImageUri;
     private long userId;
-    private FloatingActionButton fabCreate;
-    private ProgressBar progressBar;
+    private AppDatabase db;
+    private boolean isEditMode = false;
+    private EventEntity eventToEdit;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                            selectedImageUri = result.getData().getData();
+                            imgPreview.setImageURI(selectedImageUri);
+                        }
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,98 +55,203 @@ public class DashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_dashboard);
 
         db = AppDatabase.getInstance(this);
-
-        // Prefer userId from Intent, fallback to saved pref
         userId = getIntent().getLongExtra("userId", -1);
-        if (userId == -1) {
-            SharedPreferences sp = getSharedPreferences("auth", MODE_PRIVATE);
-            userId = sp.getLong("userId", -1);
-        } else {
-            getSharedPreferences("auth", MODE_PRIVATE).edit().putLong("userId", userId).apply();
+        if (userId == -1L) {
+            userId = SessionManager.getUserId(this);
+        }
+        if (userId == -1L) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
         }
 
-        rvEvents = findViewById(R.id.rvEventsDashboard);
-        rvEvents.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new EventAdapter(new ArrayList<>());
-        rvEvents.setAdapter(adapter);
+        bindViews();
+        setupListeners();
+        checkForEditMode();
+        setupBottomNav();
+    }
 
-        progressBar = findViewById(R.id.progressBar);
+    private void bindViews() {
+        etName = findViewById(R.id.etEventName);
+        etStartDate = findViewById(R.id.etStartDate);
+        etEndDate = findViewById(R.id.etEndDate);
+        etLocation = findViewById(R.id.etEventLocation);
+        etMeetLink = findViewById(R.id.etMeetLink);
+        etDescription = findViewById(R.id.etDescription);
+        cbOnline = findViewById(R.id.cbOnline);
+        cbFree = findViewById(R.id.cbFreeEntry);
+        cbParticipationForm = findViewById(R.id.cbParticipationForm);
+        btnPickPhoto = findViewById(R.id.btnPickPhoto);
+        btnCreateOrUpdateEvent = findViewById(R.id.btnCreateEvent);
+        btnShowEvents = findViewById(R.id.btnViewEvents);
+        btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
+        imgPreview = findViewById(R.id.imgPreview);
+    }
 
-        fabCreate = findViewById(R.id.fabCreateEvent);
-        fabCreate.setOnClickListener(v -> {
-            Intent i = new Intent(this, CreateEventActivity.class);
-            i.putExtra("userId", userId);
-            startActivity(i);
+    private void setupListeners() {
+        btnPickPhoto.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            imagePickerLauncher.launch(intent);
         });
 
-        adapter.setOnItemClickListener(event -> {
-            Intent i = new Intent(this, EventDetailActivity.class);
-            i.putExtra("eventId", event.id);
-            startActivity(i);
+        cbOnline.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                etLocation.setVisibility(View.GONE);
+                etMeetLink.setVisibility(View.VISIBLE);
+            } else {
+                etLocation.setVisibility(View.VISIBLE);
+                etMeetLink.setVisibility(View.GONE);
+            }
         });
 
-        // Long click -> quick actions (edit / delete)
-        adapter.setOnItemLongClickListener(event -> {
-            showItemActions(event);
-        });
+        btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
+        btnShowEvents.setOnClickListener(v -> startActivity(
+                new Intent(this, EventListActivity.class)
+                        .putExtra("userId", userId)
+                        .putExtra("onlyMine", true)));
+        btnDeleteEvent.setOnClickListener(v -> confirmDelete());
+    }
 
-        // bottom nav
+    private void checkForEditMode() {
+        long eventIdToEdit = getIntent().getLongExtra("eventId", -1);
+        if (eventIdToEdit != -1) {
+            isEditMode = true;
+            eventToEdit = db.eventDao().getEventById(eventIdToEdit);
+            if (eventToEdit == null || eventToEdit.organizerId != userId) {
+                Toast.makeText(this, "Unable to edit this event", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            populateForm(eventToEdit);
+        } else {
+            isEditMode = false;
+        }
+        btnDeleteEvent.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
+        btnCreateOrUpdateEvent.setText(isEditMode ? "Update Event" : "Create Event");
+    }
+
+    private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_home);
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_events) {
-                startActivity(new Intent(this, EventListActivity.class).putExtra("userId", userId));
+                startActivity(new Intent(this, EventListActivity.class)
+                        .putExtra("userId", userId)
+                        .putExtra("onlyMine", true));
                 return true;
             } else if (id == R.id.nav_profile) {
-                long loggedId = getSharedPreferences("auth", MODE_PRIVATE).getLong("userId", -1);
-                if (loggedId == -1L)
+                if (SessionManager.getUserId(this) == -1L) {
                     startActivity(new Intent(this, LoginActivity.class));
-                else
+                } else {
                     startActivity(new Intent(this, ProfileActivity.class));
+                }
                 return true;
-            } else {
-                return false;
             }
+            return false;
         });
     }
 
-    private void showItemActions(EventEntity event) {
-        String[] items = {"Edit", "Delete"};
+    private void populateForm(EventEntity event) {
+        etName.setText(event.name);
+        etStartDate.setText(event.startDate);
+        etEndDate.setText(event.endDate);
+        cbOnline.setChecked(event.isOnline);
+        if (event.isOnline) {
+            etMeetLink.setVisibility(View.VISIBLE);
+            etLocation.setVisibility(View.GONE);
+            etMeetLink.setText(event.meetLink);
+        } else {
+            etMeetLink.setVisibility(View.GONE);
+            etLocation.setVisibility(View.VISIBLE);
+            etLocation.setText(event.location);
+        }
+        cbFree.setChecked(event.isFree);
+        cbParticipationForm.setChecked(event.hasParticipationForm);
+        etDescription.setText(event.description);
+        if (event.imageUri != null) {
+            try {
+                selectedImageUri = Uri.parse(event.imageUri);
+                imgPreview.setImageURI(selectedImageUri);
+            } catch (Exception ignored) {
+                imgPreview.setImageResource(android.R.color.transparent);
+            }
+        }
+    }
+
+    private void saveEvent() {
+        String name = etName.getText().toString().trim();
+        String start = etStartDate.getText().toString().trim();
+        String end = etEndDate.getText().toString().trim();
+        String desc = etDescription.getText().toString().trim();
+        boolean online = cbOnline.isChecked();
+        String location = online ? null : etLocation.getText().toString().trim();
+        String meet = online ? etMeetLink.getText().toString().trim() : null;
+        boolean free = cbFree.isChecked();
+        boolean participation = cbParticipationForm.isChecked();
+
+        if (name.isEmpty() || start.isEmpty() || end.isEmpty() || desc.isEmpty() ||
+                (online && (meet == null || meet.isEmpty())) ||
+                (!online && (location == null || location.isEmpty()))) {
+            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String imageUriToSave = selectedImageUri != null ? selectedImageUri.toString()
+                : (isEditMode && eventToEdit != null ? eventToEdit.imageUri : null);
+        if (imageUriToSave == null) {
+            Toast.makeText(this, "Please select an image", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isEditMode && eventToEdit != null) {
+            eventToEdit.name = name;
+            eventToEdit.startDate = start;
+            eventToEdit.endDate = end;
+            eventToEdit.description = desc;
+            eventToEdit.isOnline = online;
+            eventToEdit.location = location;
+            eventToEdit.meetLink = meet;
+            eventToEdit.isFree = free;
+            eventToEdit.hasParticipationForm = participation;
+            eventToEdit.imageUri = imageUriToSave;
+            db.eventDao().update(eventToEdit);
+            Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
+            finish();
+        } else {
+            EventEntity e = new EventEntity(name, start, end, location, meet, online, free,
+                    desc, imageUriToSave, userId, participation);
+            db.eventDao().insert(e);
+            Toast.makeText(this, "Event created!", Toast.LENGTH_SHORT).show();
+            clearForm();
+        }
+    }
+
+    private void clearForm() {
+        etName.setText("");
+        etStartDate.setText("");
+        etEndDate.setText("");
+        etLocation.setText("");
+        etMeetLink.setText("");
+        etDescription.setText("");
+        cbOnline.setChecked(false);
+        cbFree.setChecked(false);
+        cbParticipationForm.setChecked(false);
+        imgPreview.setImageResource(android.R.color.transparent);
+        selectedImageUri = null;
+    }
+
+    private void confirmDelete() {
+        if (!isEditMode || eventToEdit == null) return;
         new AlertDialog.Builder(this)
-                .setTitle(event.name)
-                .setItems(items, (dialog, which) -> {
-                    if (which == 0) {
-                        // Edit
-                        Intent i = new Intent(this, EditEventActivity.class);
-                        i.putExtra("eventId", event.id);
-                        startActivity(i);
-                    } else {
-                        // Delete confirmation
-                        new AlertDialog.Builder(this)
-                                .setTitle("Delete event")
-                                .setMessage("Are you sure you want to delete \"" + event.name + "\"?")
-                                .setPositiveButton("Delete", (d, w) -> {
-                                    db.eventDao().delete(event.id);
-                                    Toast.makeText(this, "Event deleted", Toast.LENGTH_SHORT).show();
-                                    refreshList();
-                                })
-                                .setNegativeButton("Cancel", null)
-                                .show();
-                    }
-                }).show();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshList();
-    }
-
-    private void refreshList() {
-        progressBar.setVisibility(View.VISIBLE);
-        List<EventEntity> events = db.eventDao().getEventsForUser(userId);
-        adapter.setData(events);
-        progressBar.setVisibility(View.GONE);
+                .setTitle("Delete event")
+                .setMessage("This action cannot be undone. Continue?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    db.eventDao().delete(eventToEdit.id);
+                    Toast.makeText(this, "Event deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .show();
     }
 }
