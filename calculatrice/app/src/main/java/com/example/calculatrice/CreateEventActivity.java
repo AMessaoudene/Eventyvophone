@@ -34,6 +34,11 @@ public class CreateEventActivity extends AppCompatActivity {
                     result -> {
                         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                             selectedImageUri = result.getData().getData();
+                            try {
+                                getContentResolver().takePersistableUriPermission(selectedImageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            } catch (SecurityException e) {
+                                e.printStackTrace();
+                            }
                             imgPreview.setImageURI(selectedImageUri);
                         }
                     });

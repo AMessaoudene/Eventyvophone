@@ -85,16 +85,41 @@ public class ScanActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            // Scale down if too large to avoid OOM and improve speed
+            int maxSize = 1024;
+            if (bitmap.getWidth() > maxSize || bitmap.getHeight() > maxSize) {
+                float scale = Math.min(((float) maxSize) / bitmap.getWidth(), ((float) maxSize) / bitmap.getHeight());
+                bitmap = Bitmap.createScaledBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale), false);
+            }
+
             int[] intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
             bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
             RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
-            BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
-            Result result = new MultiFormatReader().decode(binaryBitmap);
+            
+            Result result = null;
+            try {
+                // Try HybridBinarizer first
+                BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
+                result = new MultiFormatReader().decode(binaryBitmap);
+            } catch (Exception e) {
+                // Fallback to GlobalHistogramBinarizer
+                try {
+                    BinaryBitmap binaryBitmap = new BinaryBitmap(new com.google.zxing.common.GlobalHistogramBinarizer(source));
+                    result = new MultiFormatReader().decode(binaryBitmap);
+                } catch (Exception e2) {
+                    // Both failed
+                }
+            }
 
-            Intent returnIntent = new Intent();
-            returnIntent.putExtra("SCAN_RESULT", result.getText());
-            setResult(RESULT_OK, returnIntent);
-            finish();
+            if (result != null) {
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("SCAN_RESULT", result.getText());
+                setResult(RESULT_OK, returnIntent);
+                finish();
+            } else {
+                Toast.makeText(this, "Could not detect QR code", Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception e) {
             Toast.makeText(this, "Could not scan QR from image", Toast.LENGTH_SHORT).show();
         }
