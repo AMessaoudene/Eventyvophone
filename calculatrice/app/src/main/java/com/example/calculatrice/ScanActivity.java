@@ -113,6 +113,7 @@ public class ScanActivity extends AppCompatActivity {
                 Intent returnIntent = new Intent();
                 returnIntent.putExtra("SCAN_RESULT", result.getText());
                 setResult(RESULT_OK, returnIntent);
+                NotificationHelper.showNotification(this, "Scan Successful", "QR Code detected: " + result.getText());
                 finish();
             } else {
                 Toast.makeText(this, "Could not detect QR code. Please ensure the image is clear and contains a valid QR code.", Toast.LENGTH_LONG).show();

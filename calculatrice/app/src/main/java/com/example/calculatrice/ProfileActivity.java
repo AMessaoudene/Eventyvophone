@@ -103,6 +103,8 @@ public class ProfileActivity extends AppCompatActivity {
             etConfirmNewPassword.setText("");
 
             Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+            NotificationHelper.showNotification(this, "Profile Updated", "Your profile details have been updated.");
+
         });
 
         btnLogout.setOnClickListener(v -> {

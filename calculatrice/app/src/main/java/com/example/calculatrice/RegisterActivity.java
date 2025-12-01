@@ -75,6 +75,8 @@ public class RegisterActivity extends AppCompatActivity {
         User created = db.userDao().getById(userId);
         SessionManager.saveUser(this, created);
         Toast.makeText(this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
+        NotificationHelper.showNotification(this, "Welcome!", "Account created successfully for " + username);
+
 
         if (redirectToProfile) {
             startActivity(new Intent(this, ProfileActivity.class));

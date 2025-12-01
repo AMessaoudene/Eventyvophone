@@ -18,6 +18,10 @@ public class MainActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
         btnBrowse.setOnClickListener(v -> startActivity(new Intent(this, EventListActivity.class)));
+
+        // Initialize Notifications
+        NotificationHelper.createNotificationChannel(this);
+        NotificationHelper.checkAndRequestPermission(this);
     }
 
     @Override

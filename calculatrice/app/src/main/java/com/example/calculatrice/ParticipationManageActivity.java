@@ -75,6 +75,7 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
         ParticipationEntity updated = db.participationDao().getById(entity.id);
         showQr(updated);
         loadParticipations();
+        NotificationHelper.showNotification(this, "Participation Accepted", "Accepted participation for " + entity.fullName);
     }
 
     @Override

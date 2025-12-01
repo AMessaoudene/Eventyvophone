@@ -77,6 +77,8 @@ public class ParticipationActivity extends AppCompatActivity {
         String message = "Thanks " + fn + ", your participation";
         message += " for " + event.name + " is recorded.";
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        NotificationHelper.showNotification(this, "Participation Confirmed", "You have successfully joined " + event.name);
+
         finish();
     }
 }

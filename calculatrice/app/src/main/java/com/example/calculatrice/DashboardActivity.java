@@ -237,12 +237,14 @@ public class DashboardActivity extends AppCompatActivity {
             eventToEdit.imageUri = imageUriToSave;
             db.eventDao().update(eventToEdit);
             Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
+            NotificationHelper.showNotification(this, "Event Updated", "Event '" + name + "' has been updated.");
             finish();
         } else {
             EventEntity e = new EventEntity(name, start, end, location, meet, online, free,
                     desc, imageUriToSave, userId, participation);
             db.eventDao().insert(e);
             Toast.makeText(this, "Event created!", Toast.LENGTH_SHORT).show();
+            NotificationHelper.showNotification(this, "Event Created", "Event '" + name + "' has been created.");
             clearForm();
         }
     }
