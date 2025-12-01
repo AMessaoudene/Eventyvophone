@@ -114,7 +114,22 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
                 .setTitle("QR Code for " + entity.fullName)
                 .setView(imageView)
                 .setPositiveButton("Close", null)
+                .setNeutralButton("Save", (dialog, which) -> saveToGallery(bitmap, "QR_" + entity.fullName))
                 .show();
+    }
+
+    private void saveToGallery(Bitmap bitmap, String title) {
+        String savedImageURL = android.provider.MediaStore.Images.Media.insertImage(
+                getContentResolver(),
+                bitmap,
+                title,
+                "QR Code for " + title
+        );
+        if (savedImageURL != null) {
+            android.widget.Toast.makeText(this, "QR Code saved to Gallery", android.widget.Toast.LENGTH_SHORT).show();
+        } else {
+            android.widget.Toast.makeText(this, "Failed to save QR Code", android.widget.Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String generateQrPayload(ParticipationEntity entity) {

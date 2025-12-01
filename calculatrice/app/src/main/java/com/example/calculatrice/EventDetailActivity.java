@@ -134,7 +134,28 @@ public class EventDetailActivity extends AppCompatActivity {
         });
 
         btnDelete.setOnClickListener(v -> confirmDelete());
+
+        Button btnScanQr = findViewById(R.id.btnScanQr);
+        if (isOwner) {
+            btnScanQr.setVisibility(View.VISIBLE);
+            btnScanQr.setOnClickListener(v -> {
+                Intent intent = new Intent(this, ScanActivity.class);
+                scanLauncher.launch(intent);
+            });
+        } else {
+            btnScanQr.setVisibility(View.GONE);
+        }
     }
+
+    private final androidx.activity.result.ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String content = result.getData().getStringExtra("SCAN_RESULT");
+                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
+                    // TODO: Verify participation code
+                }
+            });
 
     private void openParticipationForm() {
         Intent intent = new Intent(this, ParticipationActivity.class);

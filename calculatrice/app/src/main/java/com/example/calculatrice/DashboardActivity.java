@@ -110,10 +110,6 @@ public class DashboardActivity extends AppCompatActivity {
                         .putExtra("userId", userId)
                         .putExtra("onlyMine", true)));
         btnDeleteEvent.setOnClickListener(v -> confirmDelete());
-        findViewById(R.id.btnScanQr).setOnClickListener(v -> {
-            Intent intent = new Intent(this, ScanActivity.class);
-            scanLauncher.launch(intent);
-        });
     }
 
     private void checkForEditMode() {
@@ -273,14 +269,4 @@ public class DashboardActivity extends AppCompatActivity {
                 })
                 .show();
     }
-
-    private final ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String content = result.getData().getStringExtra("SCAN_RESULT");
-                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
-                    // TODO: Handle scanned content (e.g. open event details)
-                }
-            });
 }
