@@ -37,6 +37,10 @@ public class LoginActivity extends AppCompatActivity {
             intent.putExtra(EXTRA_REDIRECT_TO_PROFILE, redirectToProfile);
             startActivity(intent);
         });
+
+        findViewById(R.id.tvForgotPassword).setOnClickListener(v -> 
+            Toast.makeText(this, "Un email de réinitialisation a été envoyé", Toast.LENGTH_LONG).show()
+        );
     }
 
     @Override
@@ -65,6 +69,10 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (!isValidPassword(password)) {
+            return;
+        }
+
         User user = db.userDao().login(username, password);
         if (user != null) {
             SessionManager.saveUser(this, user);
@@ -73,6 +81,26 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private boolean isValidPassword(String password) {
+        if (password.length() < 8) {
+            etPassword.setError("Password must be at least 8 characters");
+            return false;
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            etPassword.setError("Password must contain at least one uppercase letter");
+            return false;
+        }
+        if (!password.matches(".*\\d.*")) {
+            etPassword.setError("Password must contain at least one digit");
+            return false;
+        }
+        if (!password.matches(".*[@#$%^&+=!].*")) {
+            etPassword.setError("Password must contain at least one special character (@#$%^&+=!)");
+            return false;
+        }
+        return true;
     }
 
     private void navigateAfterAuth(long userId) {
