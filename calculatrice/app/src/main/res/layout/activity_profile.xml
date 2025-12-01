@@ -32,13 +32,6 @@
                 android:textSize="18sp"
                 android:layout_marginBottom="8dp" />
 
-            <TextView
-                android:id="@+id/tvProfileId"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User ID"
-                android:layout_marginBottom="24dp" />
-
             <!-- Profile management -->
             <TextView
                 android:layout_width="wrap_content"
