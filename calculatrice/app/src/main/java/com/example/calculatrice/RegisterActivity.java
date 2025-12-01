@@ -85,5 +85,24 @@ public class RegisterActivity extends AppCompatActivity {
         }
         finishAffinity();
     }
+    private boolean isValidPassword(String password) {
+        if (password.length() < 8) {
+            etPassword.setError("Password must be at least 8 characters");
+            return false;
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            etPassword.setError("Password must contain at least one uppercase letter");
+            return false;
+        }
+        if (!password.matches(".*\\d.*")) {
+            etPassword.setError("Password must contain at least one digit");
+            return false;
+        }
+        if (!password.matches(".*[@#$%^&+=!].*")) {
+            etPassword.setError("Password must contain at least one special character (@#$%^&+=!)");
+            return false;
+        }
+        return true;
+    }
 }
 
