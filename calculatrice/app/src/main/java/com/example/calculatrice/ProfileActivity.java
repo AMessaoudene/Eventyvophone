@@ -97,6 +97,7 @@ public class ProfileActivity extends AppCompatActivity {
             SessionManager.saveUser(this, user);
 
             tvUsername.setText(user.username);
+            tvUserId.setText("User ID: " + user.id);
             etNewUsername.setText("");
             etNewPassword.setText("");
             etConfirmNewPassword.setText("");
