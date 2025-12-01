@@ -85,6 +85,11 @@ public class ScanActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
                 return;
             }
+            
+            // Ensure bitmap is in ARGB_8888 format for ZXing
+            if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            }
 
             // Scale down if too large to avoid OOM and improve speed
             int maxSize = 1024;

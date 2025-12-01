@@ -139,7 +139,11 @@ public class EventDetailActivity extends AppCompatActivity {
         if (isOwner) {
             btnScanQr.setVisibility(View.VISIBLE);
             btnScanQr.setOnClickListener(v -> {
-                Intent intent = new Intent(this, ScanActivity.class);
+                com.google.zxing.integration.android.IntentIntegrator integrator = new com.google.zxing.integration.android.IntentIntegrator(this);
+                integrator.setCaptureActivity(ScanActivity.class);
+                integrator.setOrientationLocked(false);
+                integrator.setPrompt("Scan QR Code");
+                Intent intent = integrator.createScanIntent();
                 scanLauncher.launch(intent);
             });
         } else {
