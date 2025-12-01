@@ -86,25 +86,27 @@ public class ScanActivity extends AppCompatActivity {
     private void decodeUri(Uri uri) {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            if (bitmap == null) {
+            Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
+            if (originalBitmap == null) {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Ensure ARGB_8888
-            if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
-                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-            }
+            // 1. Handle transparency: Draw on white background
+            Bitmap bitmap = Bitmap.createBitmap(originalBitmap.getWidth(), originalBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+            canvas.drawColor(android.graphics.Color.WHITE);
+            canvas.drawBitmap(originalBitmap, 0, 0, null);
 
-            // Try decoding with rotation
-            Result result = null;
-            int[] rotations = {0, 90, 180, 270};
-            
-            for (int rotation : rotations) {
-                Bitmap rotatedBitmap = rotateBitmap(bitmap, rotation);
-                result = attemptDecode(rotatedBitmap);
-                if (result != null) break;
+            // 2. Try decoding original bitmap first (best quality)
+            Result result = tryDecodeWithRotations(bitmap);
+
+            // 3. If failed, try scaling down (if large) to help with focus/noise or different binarization
+            if (result == null && (bitmap.getWidth() > 1024 || bitmap.getHeight() > 1024)) {
+                int maxSize = 1024;
+                float scale = Math.min(((float) maxSize) / bitmap.getWidth(), ((float) maxSize) / bitmap.getHeight());
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale), false);
+                result = tryDecodeWithRotations(scaledBitmap);
             }
 
             if (result != null) {
@@ -113,12 +115,22 @@ public class ScanActivity extends AppCompatActivity {
                 setResult(RESULT_OK, returnIntent);
                 finish();
             } else {
-                Toast.makeText(this, "Could not detect QR code. Try cropping the image.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Could not detect QR code. Please ensure the image is clear and contains a valid QR code.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error scanning image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error scanning image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private Result tryDecodeWithRotations(Bitmap bitmap) {
+        int[] rotations = {0, 90, 180, 270};
+        for (int rotation : rotations) {
+            Bitmap rotatedBitmap = rotateBitmap(bitmap, rotation);
+            Result result = attemptDecode(rotatedBitmap);
+            if (result != null) return result;
+        }
+        return null;
     }
 
     private Bitmap rotateBitmap(Bitmap source, float angle) {
@@ -135,7 +147,7 @@ public class ScanActivity extends AppCompatActivity {
         
         java.util.Map<com.google.zxing.DecodeHintType, Object> hints = new java.util.EnumMap<>(com.google.zxing.DecodeHintType.class);
         hints.put(com.google.zxing.DecodeHintType.TRY_HARDER, Boolean.TRUE);
-        hints.put(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS, java.util.Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE));
+        // Removed POSSIBLE_FORMATS restriction to be more permissive
 
         MultiFormatReader reader = new MultiFormatReader();
         reader.setHints(hints);
