@@ -69,6 +69,12 @@ public class ScanActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, androidx.annotation.NonNull String[] permissions, androidx.annotation.NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        capture.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1001 && resultCode == RESULT_OK && data != null) {
@@ -85,36 +91,20 @@ public class ScanActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
                 return;
             }
-            
-            // Ensure bitmap is in ARGB_8888 format for ZXing
+
+            // Ensure ARGB_8888
             if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
                 bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
             }
 
-            // Scale down if too large to avoid OOM and improve speed
-            int maxSize = 1024;
-            if (bitmap.getWidth() > maxSize || bitmap.getHeight() > maxSize) {
-                float scale = Math.min(((float) maxSize) / bitmap.getWidth(), ((float) maxSize) / bitmap.getHeight());
-                bitmap = Bitmap.createScaledBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale), false);
-            }
-
-            int[] intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
-            bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-            RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
-            
+            // Try decoding with rotation
             Result result = null;
-            try {
-                // Try HybridBinarizer first
-                BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(source));
-                result = new MultiFormatReader().decode(binaryBitmap);
-            } catch (Exception e) {
-                // Fallback to GlobalHistogramBinarizer
-                try {
-                    BinaryBitmap binaryBitmap = new BinaryBitmap(new com.google.zxing.common.GlobalHistogramBinarizer(source));
-                    result = new MultiFormatReader().decode(binaryBitmap);
-                } catch (Exception e2) {
-                    // Both failed
-                }
+            int[] rotations = {0, 90, 180, 270};
+            
+            for (int rotation : rotations) {
+                Bitmap rotatedBitmap = rotateBitmap(bitmap, rotation);
+                result = attemptDecode(rotatedBitmap);
+                if (result != null) break;
             }
 
             if (result != null) {
@@ -123,10 +113,41 @@ public class ScanActivity extends AppCompatActivity {
                 setResult(RESULT_OK, returnIntent);
                 finish();
             } else {
-                Toast.makeText(this, "Could not detect QR code", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Could not detect QR code. Try cropping the image.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Could not scan QR from image", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+            Toast.makeText(this, "Error scanning image", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Bitmap rotateBitmap(Bitmap source, float angle) {
+        if (angle == 0) return source;
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
+    private Result attemptDecode(Bitmap bitmap) {
+        int[] intArray = new int[bitmap.getWidth() * bitmap.getHeight()];
+        bitmap.getPixels(intArray, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+        RGBLuminanceSource source = new RGBLuminanceSource(bitmap.getWidth(), bitmap.getHeight(), intArray);
+        
+        java.util.Map<com.google.zxing.DecodeHintType, Object> hints = new java.util.EnumMap<>(com.google.zxing.DecodeHintType.class);
+        hints.put(com.google.zxing.DecodeHintType.TRY_HARDER, Boolean.TRUE);
+        hints.put(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS, java.util.Collections.singletonList(com.google.zxing.BarcodeFormat.QR_CODE));
+
+        MultiFormatReader reader = new MultiFormatReader();
+        reader.setHints(hints);
+
+        try {
+            return reader.decodeWithState(new BinaryBitmap(new HybridBinarizer(source)));
+        } catch (Exception e) {
+            try {
+                return reader.decodeWithState(new BinaryBitmap(new com.google.zxing.common.GlobalHistogramBinarizer(source)));
+            } catch (Exception e2) {
+                return null;
+            }
         }
     }
 }
