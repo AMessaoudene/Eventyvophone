@@ -110,6 +110,10 @@ public class DashboardActivity extends AppCompatActivity {
                         .putExtra("userId", userId)
                         .putExtra("onlyMine", true)));
         btnDeleteEvent.setOnClickListener(v -> confirmDelete());
+        findViewById(R.id.btnScanQr).setOnClickListener(v -> {
+            Intent intent = new Intent(this, ScanActivity.class);
+            scanLauncher.launch(intent);
+        });
     }
 
     private void checkForEditMode() {
@@ -200,6 +204,18 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
+        if (online && meet != null && !android.util.Patterns.WEB_URL.matcher(meet).matches()) {
+            etMeetLink.setError("Invalid URL");
+            etMeetLink.requestFocus();
+            return;
+        }
+
+        if (start.compareTo(end) > 0) {
+            etEndDate.setError("End date cannot be before start date");
+            etEndDate.requestFocus();
+            return;
+        }
+
         String imageUriToSave = selectedImageUri != null ? selectedImageUri.toString()
                 : (isEditMode && eventToEdit != null ? eventToEdit.imageUri : null);
         if (imageUriToSave == null) {
@@ -257,4 +273,14 @@ public class DashboardActivity extends AppCompatActivity {
                 })
                 .show();
     }
+
+    private final ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String content = result.getData().getStringExtra("SCAN_RESULT");
+                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
+                    // TODO: Handle scanned content (e.g. open event details)
+                }
+            });
 }

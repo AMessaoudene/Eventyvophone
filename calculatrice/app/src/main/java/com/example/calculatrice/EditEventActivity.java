@@ -134,6 +134,18 @@ public class EditEventActivity extends AppCompatActivity {
             return;
         }
 
+        if (online && meet != null && !android.util.Patterns.WEB_URL.matcher(meet).matches()) {
+            etMeetLink.setError("Invalid URL");
+            etMeetLink.requestFocus();
+            return;
+        }
+
+        if (start.compareTo(end) > 0) {
+            etEndDate.setError("End date cannot be before start date");
+            etEndDate.requestFocus();
+            return;
+        }
+
         // Create updated EventEntity
         EventEntity updated = new EventEntity(
                 name, start, end,
