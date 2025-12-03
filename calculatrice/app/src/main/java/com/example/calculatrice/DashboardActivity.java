@@ -341,24 +341,6 @@ public class DashboardActivity extends AppCompatActivity {
     private void confirmDelete() {
         if (!isEditMode || eventToEdit == null) return;
         new AlertDialog.Builder(this)
-                .setTitle("Delete event")
-                .setMessage("This action cannot be undone. Continue?")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    showLoading(true);
-                    firestoreHelper.deleteEvent(eventToEdit.id, new FirestoreHelper.OnComplete<Void>() {
-                        @Override
-                        public void onSuccess(Void result) {
-                            showLoading(false);
-                            Toast.makeText(DashboardActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-
-                        @Override
-                        public void onFailure(Exception e) {
-                            showLoading(false);
-                            Toast.makeText(DashboardActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
                     });
                 })
                 .show();

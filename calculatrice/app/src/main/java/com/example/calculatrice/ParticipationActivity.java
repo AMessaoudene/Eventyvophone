@@ -89,7 +89,42 @@ public class ParticipationActivity extends AppCompatActivity {
                 String message = "Thanks " + fn + ", your participation";
                 message += " for " + event.name + " is recorded.";
                 Toast.makeText(ParticipationActivity.this, message, Toast.LENGTH_LONG).show();
+                
+                // 1. Notify the Participant (Local + Firestore)
+                // We don't have the participant's User ID easily unless they are logged in.
+                // But we can check SessionManager.
+                String currentUserId = SessionManager.getUserId(ParticipationActivity.this);
+                if (currentUserId != null) {
+                    NotificationEntity userNotif = new NotificationEntity(
+                        currentUserId,
+                        "Participation Confirmed",
+                        "You have successfully joined " + event.name
+                    );
+                    firestoreHelper.addNotification(userNotif, new FirestoreHelper.OnComplete<Void>() {
+                        @Override
+                        public void onSuccess(Void v) {} // Ignore
+                        @Override
+                        public void onFailure(Exception e) {}
+                    });
+                }
+                // Local Notification always
                 NotificationHelper.showNotification(ParticipationActivity.this, "Participation Confirmed", "You have successfully joined " + event.name);
+
+                // 2. Notify the Organizer (Firestore only, they will see it in their bell)
+                if (event.organizerId != null) {
+                    NotificationEntity orgNotif = new NotificationEntity(
+                        event.organizerId,
+                        "New Participant",
+                        fn + " has joined your event: " + event.name
+                    );
+                    firestoreHelper.addNotification(orgNotif, new FirestoreHelper.OnComplete<Void>() {
+                        @Override
+                        public void onSuccess(Void v) {}
+                        @Override
+                        public void onFailure(Exception e) {}
+                    });
+                }
+
                 finish();
             }
 

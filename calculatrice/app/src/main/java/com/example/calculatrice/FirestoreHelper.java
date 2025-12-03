@@ -133,6 +133,33 @@ public class FirestoreHelper {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    // Notification Operations
+
+    public void addNotification(NotificationEntity notification, OnComplete<Void> callback) {
+        String id = db.collection("notifications").document().getId();
+        notification.id = id;
+        db.collection("notifications").document(id)
+                .set(notification)
+                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    public void getUserNotifications(String userId, OnComplete<List<NotificationEntity>> callback) {
+        db.collection("notifications")
+                .whereEqualTo("userId", userId)
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<NotificationEntity> notifications = new ArrayList<>();
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        NotificationEntity notification = document.toObject(NotificationEntity.class);
+                        notifications.add(notification);
+                    }
+                    callback.onSuccess(notifications);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public interface OnComplete<T> {
         void onSuccess(T result);
         void onFailure(Exception e);
