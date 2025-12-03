@@ -16,7 +16,7 @@ public class ParticipationActivity extends AppCompatActivity {
     private EditText phone;
     private EditText note;
     private TextView tvEventTitle;
-    private AppDatabase db;
+    private FirestoreHelper firestoreHelper;
     private EventEntity event;
 
     @Override
@@ -24,15 +24,25 @@ public class ParticipationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_participation);
 
-        db = AppDatabase.getInstance(this);
-        long eventId = getIntent().getLongExtra("eventId", -1L);
-        if (eventId == -1L) {
-            finish();
-            return;
+        firestoreHelper = new FirestoreHelper();
+        
+        event = (EventEntity) getIntent().getSerializableExtra("event");
+        if (event == null) {
+            // Fallback if not passed (shouldn't happen with updated flow)
+             String eventId = getIntent().getStringExtra("eventId");
+             if (eventId == null) {
+                 finish();
+                 return;
+             }
+             // For now, we assume event is passed. If not, we can't check hasParticipationForm easily without fetching.
+             // We'll proceed but might miss the check if we don't fetch.
+             // Given the flow, we'll just show a toast if event is missing.
+             Toast.makeText(this, "Error loading event info", Toast.LENGTH_SHORT).show();
+             finish();
+             return;
         }
 
-        event = db.eventDao().getEventById(eventId);
-        if (event == null || !event.hasParticipationForm) {
+        if (!event.hasParticipationForm) {
             Toast.makeText(this, "Participation is not available for this event", Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -72,13 +82,21 @@ public class ParticipationActivity extends AppCompatActivity {
                 notes,
                 System.currentTimeMillis()
         );
-        db.participationDao().insert(entity);
+        
+        firestoreHelper.addParticipation(entity, new FirestoreHelper.OnComplete<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                String message = "Thanks " + fn + ", your participation";
+                message += " for " + event.name + " is recorded.";
+                Toast.makeText(ParticipationActivity.this, message, Toast.LENGTH_LONG).show();
+                NotificationHelper.showNotification(ParticipationActivity.this, "Participation Confirmed", "You have successfully joined " + event.name);
+                finish();
+            }
 
-        String message = "Thanks " + fn + ", your participation";
-        message += " for " + event.name + " is recorded.";
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        NotificationHelper.showNotification(this, "Participation Confirmed", "You have successfully joined " + event.name);
-
-        finish();
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(ParticipationActivity.this, "Failed to submit: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

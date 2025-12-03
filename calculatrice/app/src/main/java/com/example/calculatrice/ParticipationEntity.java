@@ -6,10 +6,10 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "participations")
 public class ParticipationEntity {
 
-    @PrimaryKey(autoGenerate = true)
-    public long id;
+    @PrimaryKey(autoGenerate = false)
+    public String id;
 
-    public long eventId;
+    public String eventId;
     public String fullName;
     public String email;
     public String phone;
@@ -19,7 +19,9 @@ public class ParticipationEntity {
     public String qrCodeData;
     public long decisionAt;
 
-    public ParticipationEntity(long eventId, String fullName, String email,
+    public ParticipationEntity() {}
+
+    public ParticipationEntity(String eventId, String fullName, String email,
                                String phone, String note, long createdAt) {
         this.eventId = eventId;
         this.fullName = fullName;

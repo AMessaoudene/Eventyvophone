@@ -35,8 +35,9 @@ public class DashboardActivity extends AppCompatActivity {
     private Button btnDeleteEvent;
     private ImageView imgPreview;
     private Uri selectedImageUri;
-    private long userId;
-    private AppDatabase db;
+    private long userIdLong; // Keeping for compatibility if needed, but mainly using String UID
+    private String userId;
+    private FirestoreHelper firestoreHelper;
     private boolean isEditMode = false;
     private EventEntity eventToEdit;
 
@@ -59,12 +60,12 @@ public class DashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-        db = AppDatabase.getInstance(this);
-        userId = getIntent().getLongExtra("userId", -1);
-        if (userId == -1L) {
+        firestoreHelper = new FirestoreHelper();
+        userId = getIntent().getStringExtra("userId");
+        if (userId == null) {
             userId = SessionManager.getUserId(this);
         }
-        if (userId == -1L) {
+        if (userId == null) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
@@ -118,11 +119,10 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void checkForEditMode() {
-        long eventIdToEdit = getIntent().getLongExtra("eventId", -1);
-        if (eventIdToEdit != -1) {
+        eventToEdit = (EventEntity) getIntent().getSerializableExtra("event");
+        if (eventToEdit != null) {
             isEditMode = true;
-            eventToEdit = db.eventDao().getEventById(eventIdToEdit);
-            if (eventToEdit == null || eventToEdit.organizerId != userId) {
+            if (!eventToEdit.organizerId.equals(userId)) {
                 Toast.makeText(this, "Unable to edit this event", Toast.LENGTH_SHORT).show();
                 finish();
                 return;
@@ -146,8 +146,8 @@ public class DashboardActivity extends AppCompatActivity {
                         .putExtra("onlyMine", true));
                 return true;
             } else if (id == R.id.nav_profile) {
-                long loggedId = SessionManager.getUserId(this);
-                if (loggedId == -1L) {
+                String loggedId = SessionManager.getUserId(this);
+                if (loggedId == null) {
                     Intent intent = new Intent(this, LoginActivity.class);
                     intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
                     startActivity(intent);
@@ -235,17 +235,37 @@ public class DashboardActivity extends AppCompatActivity {
             eventToEdit.isFree = free;
             eventToEdit.hasParticipationForm = participation;
             eventToEdit.imageUri = imageUriToSave;
-            db.eventDao().update(eventToEdit);
-            Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
-            NotificationHelper.showNotification(this, "Event Updated", "Event '" + name + "' has been updated.");
-            finish();
+            
+            firestoreHelper.updateEvent(eventToEdit, new FirestoreHelper.OnComplete<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Toast.makeText(DashboardActivity.this, "Event updated", Toast.LENGTH_SHORT).show();
+                    NotificationHelper.showNotification(DashboardActivity.this, "Event Updated", "Event '" + name + "' has been updated.");
+                    finish();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Toast.makeText(DashboardActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
             EventEntity e = new EventEntity(name, start, end, location, meet, online, free,
                     desc, imageUriToSave, userId, participation);
-            db.eventDao().insert(e);
-            Toast.makeText(this, "Event created!", Toast.LENGTH_SHORT).show();
-            NotificationHelper.showNotification(this, "Event Created", "Event '" + name + "' has been created.");
-            clearForm();
+            
+            firestoreHelper.addEvent(e, new FirestoreHelper.OnComplete<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Toast.makeText(DashboardActivity.this, "Event created!", Toast.LENGTH_SHORT).show();
+                    NotificationHelper.showNotification(DashboardActivity.this, "Event Created", "Event '" + name + "' has been created.");
+                    clearForm();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Toast.makeText(DashboardActivity.this, "Creation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -270,9 +290,18 @@ public class DashboardActivity extends AppCompatActivity {
                 .setMessage("This action cannot be undone. Continue?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    db.eventDao().delete(eventToEdit.id);
-                    Toast.makeText(this, "Event deleted", Toast.LENGTH_SHORT).show();
-                    finish();
+                    firestoreHelper.deleteEvent(eventToEdit.id, new FirestoreHelper.OnComplete<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Toast.makeText(DashboardActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Toast.makeText(DashboardActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 })
                 .show();
     }

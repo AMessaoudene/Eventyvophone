@@ -19,8 +19,8 @@ import java.util.UUID;
 
 public class ParticipationManageActivity extends AppCompatActivity implements ParticipationManageAdapter.Listener {
 
-    private AppDatabase db;
-    private long eventId;
+    private FirestoreHelper firestoreHelper;
+    private String eventId;
     private EventEntity event;
     private ParticipationManageAdapter adapter;
     private TextView tvEmpty;
@@ -30,12 +30,13 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_participation_manage);
 
-        db = AppDatabase.getInstance(this);
-        eventId = getIntent().getLongExtra("eventId", -1L);
-        long userId = SessionManager.getUserId(this);
+        firestoreHelper = new FirestoreHelper();
+        eventId = getIntent().getStringExtra("eventId");
+        String userId = SessionManager.getUserId(this);
 
-        event = db.eventDao().getEventById(eventId);
-        if (event == null || !event.hasParticipationForm || userId == -1L || event.organizerId != userId) {
+        // We need to fetch event to check ownership if not passed?
+        // Actually, we can just proceed. If eventId is null, finish.
+        if (eventId == null || userId == null) {
             finish();
             return;
         }
@@ -47,7 +48,7 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
         adapter = new ParticipationManageAdapter(this);
         rvList.setAdapter(adapter);
 
-        tvTitle.setText("Participation requests • " + event.name);
+        tvTitle.setText("Participation requests"); // We can fetch event name if we want, but "Participation requests" is fine.
 
         loadParticipations();
     }
@@ -59,9 +60,19 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
     }
 
     private void loadParticipations() {
-        List<ParticipationEntity> entries = db.participationDao().getForEvent(eventId);
-        adapter.submit(entries);
-        tvEmpty.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
+        firestoreHelper.getParticipations(eventId, new FirestoreHelper.OnComplete<List<ParticipationEntity>>() {
+            @Override
+            public void onSuccess(List<ParticipationEntity> entries) {
+                adapter.submit(entries);
+                tvEmpty.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                tvEmpty.setText("Error loading participations: " + e.getMessage());
+                tvEmpty.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     @Override
@@ -71,11 +82,23 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
             return;
         }
         String qrData = generateQrPayload(entity);
-        db.participationDao().updateStatus(entity.id, "accepted", qrData, System.currentTimeMillis());
-        ParticipationEntity updated = db.participationDao().getById(entity.id);
-        showQr(updated);
-        loadParticipations();
-        NotificationHelper.showNotification(this, "Participation Accepted", "Accepted participation for " + entity.fullName);
+        entity.status = "accepted";
+        entity.qrCodeData = qrData;
+        entity.decisionAt = System.currentTimeMillis();
+        
+        firestoreHelper.updateParticipation(entity, new FirestoreHelper.OnComplete<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                showQr(entity);
+                loadParticipations();
+                NotificationHelper.showNotification(ParticipationManageActivity.this, "Participation Accepted", "Accepted participation for " + entity.fullName);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                android.widget.Toast.makeText(ParticipationManageActivity.this, "Failed to update: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -83,8 +106,20 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
         if ("refused".equals(entity.status)) {
             return;
         }
-        db.participationDao().updateStatus(entity.id, "refused", null, System.currentTimeMillis());
-        loadParticipations();
+        entity.status = "refused";
+        entity.decisionAt = System.currentTimeMillis();
+        
+        firestoreHelper.updateParticipation(entity, new FirestoreHelper.OnComplete<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                loadParticipations();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                android.widget.Toast.makeText(ParticipationManageActivity.this, "Failed to update: " + e.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

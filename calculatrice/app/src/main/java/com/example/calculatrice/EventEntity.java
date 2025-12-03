@@ -3,10 +3,12 @@ package com.example.calculatrice;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.io.Serializable;
+
 @Entity(tableName = "events")
-public class EventEntity {
-    @PrimaryKey(autoGenerate = true)
-    public long id;
+public class EventEntity implements Serializable {
+    @PrimaryKey(autoGenerate = false) // Firestore generates ID
+    public String id;
 
     public String name;
     public String startDate;
@@ -17,13 +19,15 @@ public class EventEntity {
     public boolean isFree;
     public String description;
     public String imageUri;
-    public long organizerId;
+    public String organizerId;
     public boolean hasParticipationForm;
+
+    public EventEntity() {} // Required for Firestore
 
     public EventEntity(String name, String startDate, String endDate,
                        String location, String meetLink, boolean isOnline,
                        boolean isFree, String description, String imageUri,
-                       long organizerId, boolean hasParticipationForm) {
+                       String organizerId, boolean hasParticipationForm) {
         this.name = name;
         this.startDate = startDate;
         this.endDate = endDate;

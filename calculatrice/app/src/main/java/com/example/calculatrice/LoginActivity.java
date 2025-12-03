@@ -9,13 +9,16 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class LoginActivity extends AppCompatActivity {
 
     public static final String EXTRA_REDIRECT_TO_PROFILE = "redirect_to_profile";
 
-    private EditText etUsername;
+    private EditText etEmail;
     private EditText etPassword;
-    private AppDatabase db;
+    private FirebaseAuth mAuth;
     private boolean redirectToProfile;
 
     @Override
@@ -23,10 +26,11 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        db = AppDatabase.getInstance(this);
+        mAuth = FirebaseAuth.getInstance();
         redirectToProfile = getIntent().getBooleanExtra(EXTRA_REDIRECT_TO_PROFILE, false);
 
-        etUsername = findViewById(R.id.etUsername);
+        etEmail = findViewById(R.id.etUsername); // Reusing ID but treating as email
+        etEmail.setHint("Email");
         etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
         Button btnRegister = findViewById(R.id.btnRegister);
@@ -53,62 +57,39 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        long existingUserId = SessionManager.getUserId(this);
-        if (existingUserId != -1L) {
-            navigateAfterAuth(existingUserId);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            navigateAfterAuth();
             finish();
         }
     }
 
     private void login() {
-        String username = etUsername.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, "Enter username & password", Toast.LENGTH_SHORT).show();
+        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+            Toast.makeText(this, "Enter email & password", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (!isValidPassword(password)) {
-            return;
-        }
-
-        User user = db.userDao().login(username, password);
-        if (user != null) {
-            SessionManager.saveUser(this, user);
-            navigateAfterAuth(user.id);
-            finish();
-        } else {
-            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-        }
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        navigateAfterAuth();
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Authentication failed: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    private boolean isValidPassword(String password) {
-        if (password.length() < 8) {
-            etPassword.setError("Password must be at least 8 characters");
-            return false;
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            etPassword.setError("Password must contain at least one uppercase letter");
-            return false;
-        }
-        if (!password.matches(".*\\d.*")) {
-            etPassword.setError("Password must contain at least one digit");
-            return false;
-        }
-        if (!password.matches(".*[@#$%^&+=!].*")) {
-            etPassword.setError("Password must contain at least one special character (@#$%^&+=!)");
-            return false;
-        }
-        return true;
-    }
-
-    private void navigateAfterAuth(long userId) {
+    private void navigateAfterAuth() {
         if (redirectToProfile) {
             startActivity(new Intent(this, ProfileActivity.class));
         } else {
             Intent intent = new Intent(this, DashboardActivity.class);
-            intent.putExtra("userId", userId);
             startActivity(intent);
         }
     }

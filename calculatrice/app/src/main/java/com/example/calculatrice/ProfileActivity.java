@@ -23,8 +23,20 @@ public class ProfileActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        long userId = SessionManager.getUserId(this);
-        if (userId == -1L) {
+    private FirestoreHelper firestoreHelper;
+    private User currentUser;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_profile);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        String userId = SessionManager.getUserId(this);
+        if (userId == null) {
             Intent intent = new Intent(this, LoginActivity.class);
             intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
             startActivity(intent);
@@ -32,8 +44,7 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
-        AppDatabase db = AppDatabase.getInstance(this);
-        User user = db.userDao().getById(userId);
+        firestoreHelper = new FirestoreHelper();
 
         TextView tvUsername = findViewById(R.id.tvProfileUsername);
         TextView tvUserId = findViewById(R.id.tvProfileId);
@@ -44,18 +55,26 @@ public class ProfileActivity extends AppCompatActivity {
         Button btnUpdateProfile = findViewById(R.id.btnUpdateProfile);
         Button btnLogout = findViewById(R.id.btnLogout);
 
-        if (user != null) {
-            tvUsername.setText(user.username);
-            tvUserId.setText("User ID: " + user.id);
-            etNewEmail.setText(user.email);
-        } else {
-            tvUsername.setText("Unknown user");
-            tvUserId.setText("");
-        }
+        // Fetch user from Firestore
+        firestoreHelper.getUser(userId, new FirestoreHelper.OnComplete<User>() {
+            @Override
+            public void onSuccess(User user) {
+                currentUser = user;
+                tvUsername.setText(user.username);
+                tvUserId.setText("User ID: " + userId);
+                etNewEmail.setText(user.email);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                tvUsername.setText("Error loading user");
+                Toast.makeText(ProfileActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         btnUpdateProfile.setOnClickListener(v -> {
-            if (user == null) {
-                Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
+            if (currentUser == null) {
+                Toast.makeText(this, "User not loaded", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -69,35 +88,42 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            // Validate and update username
+            // Update Username/Email in Firestore
+            // Note: Updating Email in Auth requires re-authentication usually, skipping for now or just updating Firestore
+            // Updating Password in Auth requires mAuth.currentUser.updatePassword()
+
             if (!TextUtils.isEmpty(newUsername)) {
                 if (newUsername.length() < 4) {
                     Toast.makeText(this, "Username must be at least 4 characters", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                User existing = db.userDao().findByUsername(newUsername);
-                if (existing != null && existing.id != user.id) {
-                    Toast.makeText(this, "Username already taken", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                user.username = newUsername;
+                currentUser.username = newUsername;
             }
-
-            // Validate and update email
+            
             if (!TextUtils.isEmpty(newEmail)) {
-                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
-                    Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                User existing = db.userDao().findByEmail(newEmail);
-                if (existing != null && existing.id != user.id) {
-                    Toast.makeText(this, "Email already taken", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                user.email = newEmail;
+                 currentUser.email = newEmail;
             }
 
-            // Validate and update password
+            // Save to Firestore
+            firestoreHelper.addUser(userId, currentUser.username, currentUser.email, new FirestoreHelper.OnComplete<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    SessionManager.saveUser(ProfileActivity.this, userId, currentUser.username);
+                    tvUsername.setText(currentUser.username);
+                    etNewUsername.setText("");
+                    etNewEmail.setText(currentUser.email);
+                    
+                    Toast.makeText(ProfileActivity.this, "Profile updated", Toast.LENGTH_SHORT).show();
+                    NotificationHelper.showNotification(ProfileActivity.this, "Profile Updated", "Your profile details have been updated.");
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    Toast.makeText(ProfileActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            // Password update (Firebase Auth)
             if (!TextUtils.isEmpty(newPassword)) {
                 if (newPassword.length() < 6) {
                     Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
@@ -107,25 +133,22 @@ public class ProfileActivity extends AppCompatActivity {
                     Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                user.password = newPassword;
+                
+                FirebaseAuth.getInstance().getCurrentUser().updatePassword(newPassword)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                             Toast.makeText(this, "Password updated", Toast.LENGTH_SHORT).show();
+                             etNewPassword.setText("");
+                             etConfirmNewPassword.setText("");
+                        } else {
+                             Toast.makeText(this, "Password update failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
             }
-
-            db.userDao().update(user);
-            SessionManager.saveUser(this, user);
-
-            tvUsername.setText(user.username);
-            tvUserId.setText("User ID: " + user.id);
-            etNewUsername.setText("");
-            etNewEmail.setText(user.email);
-            etNewPassword.setText("");
-            etConfirmNewPassword.setText("");
-
-            Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
-            NotificationHelper.showNotification(this, "Profile Updated", "Your profile details have been updated.");
-
         });
 
         btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
             SessionManager.clear(this);
             Toast.makeText(this, "Signed out", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, MainActivity.class);
@@ -143,12 +166,11 @@ public class ProfileActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
-                long loggedId = SessionManager.getUserId(this);
-                if (loggedId == -1L) {
+                String loggedId = SessionManager.getUserId(this);
+                if (loggedId == null) {
                     startActivity(new Intent(this, MainActivity.class));
                 } else {
-                    startActivity(new Intent(this, DashboardActivity.class)
-                            .putExtra("userId", loggedId));
+                    startActivity(new Intent(this, DashboardActivity.class));
                 }
                 return true;
             } else if (id == R.id.nav_events) {

@@ -15,7 +15,8 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etEmail;
     private EditText etPassword;
     private EditText etConfirmPassword;
-    private AppDatabase db;
+    private FirebaseAuth mAuth;
+    private FirestoreHelper firestoreHelper;
     private boolean redirectToProfile;
 
     @Override
@@ -23,7 +24,8 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        db = AppDatabase.getInstance(this);
+        mAuth = FirebaseAuth.getInstance();
+        firestoreHelper = new FirestoreHelper();
         redirectToProfile = getIntent().getBooleanExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, false);
 
         etUsername = findViewById(R.id.etRegUsername);
@@ -73,30 +75,35 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        User existing = db.userDao().findByUsername(username);
-        if (existing != null) {
-            Toast.makeText(this, "Username already taken", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        User existingEmail = db.userDao().findByEmail(email);
-        if (existingEmail != null) {
-            Toast.makeText(this, "Email already registered", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        String uid = mAuth.getCurrentUser().getUid();
+                        firestoreHelper.addUser(uid, username, email, new FirestoreHelper.OnComplete<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                SessionManager.saveUser(RegisterActivity.this, uid, username);
+                                Toast.makeText(RegisterActivity.this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
+                                NotificationHelper.showNotification(RegisterActivity.this, "Welcome!", "Account created successfully for " + username);
+                                navigateAfterAuth();
+                            }
 
-        long userId = db.userDao().insert(new User(username, password, email));
-        User created = db.userDao().getById(userId);
-        SessionManager.saveUser(this, created);
-        Toast.makeText(this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
-        NotificationHelper.showNotification(this, "Welcome!", "Account created successfully for " + username);
+                            @Override
+                            public void onFailure(Exception e) {
+                                Toast.makeText(RegisterActivity.this, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(this, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
-
+    private void navigateAfterAuth() {
         if (redirectToProfile) {
             startActivity(new Intent(this, ProfileActivity.class));
         } else {
             Intent intent = new Intent(this, DashboardActivity.class);
-            intent.putExtra("userId", userId);
             startActivity(intent);
         }
         finishAffinity();

@@ -19,16 +19,15 @@ public final class SessionManager {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    public static void saveUser(Context context, User user) {
-        if (user == null) return;
+    public static void saveUser(Context context, String uid, String username) {
         prefs(context).edit()
-                .putLong(KEY_USER_ID, user.id)
-                .putString(KEY_USERNAME, user.username)
+                .putString(KEY_USER_ID, uid)
+                .putString(KEY_USERNAME, username)
                 .apply();
     }
 
-    public static long getUserId(Context context) {
-        return prefs(context).getLong(KEY_USER_ID, -1L);
+    public static String getUserId(Context context) {
+        return prefs(context).getString(KEY_USER_ID, null);
     }
 
     public static String getUsername(Context context) {

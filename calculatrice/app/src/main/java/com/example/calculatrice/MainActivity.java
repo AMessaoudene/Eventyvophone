@@ -27,8 +27,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        long userId = SessionManager.getUserId(this);
-        if (userId != -1L) {
+        String userId = SessionManager.getUserId(this);
+        if (userId != null) {
             Intent intent = new Intent(this, DashboardActivity.class);
             intent.putExtra("userId", userId);
             startActivity(intent);

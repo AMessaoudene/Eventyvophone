@@ -18,30 +18,45 @@ import java.util.Locale;
 
 public class EventDetailActivity extends AppCompatActivity {
 
-    private AppDatabase db;
+    private FirestoreHelper firestoreHelper;
     private EventEntity event;
     private int participationCount;
+    private String userId;
+
+    private final androidx.activity.result.ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String content = result.getData().getStringExtra("SCAN_RESULT");
+                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
+                    // TODO: Verify participation code
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_detail);
 
-        long eventId = getIntent().getLongExtra("eventId", -1L);
-        if (eventId == -1L) {
-            finish();
-            return;
-        }
+        firestoreHelper = new FirestoreHelper();
+        userId = SessionManager.getUserId(this);
 
-        db = AppDatabase.getInstance(this);
-        event = db.eventDao().getEventById(eventId);
+        event = (EventEntity) getIntent().getSerializableExtra("event");
         if (event == null) {
-            finish();
-            return;
+            // Fallback: try to get ID and fetch (not implemented fully yet, relying on object pass)
+             String eventId = getIntent().getStringExtra("eventId");
+             if (eventId == null) {
+                 finish();
+                 return;
+             }
+             // Ideally we should fetch here if event is null, but for now we assume it's passed.
+             // If we really need to fetch, we can add getEvent(id) to helper.
+             Toast.makeText(this, "Error loading event details", Toast.LENGTH_SHORT).show();
+             finish();
+             return;
         }
 
-        participationCount = db.participationDao().countForEvent(event.id);
-
+        loadParticipationCount();
         bindEventDetails();
         setupBottomNav();
     }
@@ -49,15 +64,25 @@ public class EventDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Reload participation count or event details if needed
         if (event != null) {
-            event = db.eventDao().getEventById(event.id);
-            if (event == null) {
-                finish();
-                return;
-            }
-            participationCount = db.participationDao().countForEvent(event.id);
-            bindEventDetails();
+             loadParticipationCount();
         }
+    }
+
+    private void loadParticipationCount() {
+        firestoreHelper.countParticipations(event.id, new FirestoreHelper.OnComplete<Integer>() {
+            @Override
+            public void onSuccess(Integer count) {
+                participationCount = count;
+                bindEventDetails(); // Refresh UI
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                // Ignore or show error
+            }
+        });
     }
 
     private void bindEventDetails() {
@@ -113,8 +138,7 @@ public class EventDetailActivity extends AppCompatActivity {
             imgEvent.setImageResource(android.R.drawable.ic_menu_report_image);
         }
 
-        long loggedUserId = SessionManager.getUserId(this);
-        boolean isOwner = loggedUserId != -1L && loggedUserId == event.organizerId;
+        boolean isOwner = userId != null && userId.equals(event.organizerId);
 
         btnParticipate.setVisibility(event.hasParticipationForm ? View.VISIBLE : View.GONE);
         btnParticipate.setOnClickListener(v -> openParticipationForm());
@@ -128,8 +152,9 @@ public class EventDetailActivity extends AppCompatActivity {
 
         btnEdit.setOnClickListener(v -> {
             Intent intent = new Intent(this, DashboardActivity.class);
-            intent.putExtra("eventId", event.id);
-            intent.putExtra("userId", loggedUserId);
+            intent.putExtra("eventId", event.id); // Still pass ID just in case
+            intent.putExtra("event", event); // Pass object
+            intent.putExtra("userId", userId);
             startActivity(intent);
         });
 
@@ -151,20 +176,11 @@ public class EventDetailActivity extends AppCompatActivity {
         }
     }
 
-    private final androidx.activity.result.ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
-            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String content = result.getData().getStringExtra("SCAN_RESULT");
-                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
-                    // TODO: Verify participation code
-                }
-            });
-
     private void openParticipationForm() {
         Intent intent = new Intent(this, ParticipationActivity.class);
         intent.putExtra("eventId", event.id);
         intent.putExtra("eventName", event.name);
+        intent.putExtra("event", event); // Pass object
         startActivity(intent);
     }
 
@@ -180,9 +196,18 @@ public class EventDetailActivity extends AppCompatActivity {
                 .setMessage("Do you really want to delete this event?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    db.eventDao().delete(event.id);
-                    Toast.makeText(this, "Event deleted", Toast.LENGTH_SHORT).show();
-                    finish();
+                    firestoreHelper.deleteEvent(event.id, new FirestoreHelper.OnComplete<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Toast.makeText(EventDetailActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Toast.makeText(EventDetailActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 })
                 .show();
     }
@@ -193,15 +218,15 @@ public class EventDetailActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
-                if (SessionManager.getUserId(this) == -1L) {
+                if (SessionManager.getUserId(this) == null) {
                     startActivity(new Intent(this, MainActivity.class));
                 } else {
                     startActivity(new Intent(this, DashboardActivity.class));
                 }
                 return true;
             } else if (id == R.id.nav_profile) {
-                long userId = SessionManager.getUserId(this);
-                if (userId == -1L) {
+                String userId = SessionManager.getUserId(this);
+                if (userId == null) {
                     Intent intent = new Intent(this, LoginActivity.class);
                     intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
                     startActivity(intent);
