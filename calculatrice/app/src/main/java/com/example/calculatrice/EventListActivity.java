@@ -67,8 +67,14 @@ public class EventListActivity extends AppCompatActivity {
             
             // Show toggle only if logged in
             switchMyEvents.setVisibility(View.VISIBLE);
+            switchMyEvents.setChecked(false); // Force unchecked by default
             switchMyEvents.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 showOnlyMine = isChecked;
+                if (isChecked) {
+                    android.widget.Toast.makeText(this, "Showing only MY events", android.widget.Toast.LENGTH_SHORT).show();
+                } else {
+                    android.widget.Toast.makeText(this, "Showing ALL Public events", android.widget.Toast.LENGTH_SHORT).show();
+                }
                 loadEvents();
             });
         } else {
@@ -89,9 +95,6 @@ public class EventListActivity extends AppCompatActivity {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
         
-        // Debug feedback
-        // android.widget.Toast.makeText(this, showOnlyMine ? "Showing my events" : "Showing all events", android.widget.Toast.LENGTH_SHORT).show();
-
         FirestoreHelper.OnComplete<List<EventEntity>> callback = new FirestoreHelper.OnComplete<List<EventEntity>>() {
             @Override
             public void onSuccess(List<EventEntity> events) {
