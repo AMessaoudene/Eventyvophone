@@ -13,6 +13,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
 
+import android.widget.Toast;
+
 public class EventListActivity extends AppCompatActivity {
 
     public static final String EXTRA_MODE = "mode";
@@ -20,6 +22,18 @@ public class EventListActivity extends AppCompatActivity {
     public static final String MODE_MINE = "MINE";
 
     private String currentMode = MODE_PUBLIC;
+
+    private RecyclerView rvEvents;
+    private TextView tvEmptyState;
+    private TextView tvStatus;
+    private EventAdapter adapter;
+    private FirestoreHelper firestoreHelper;
+    private String userId;
+    private boolean showOnlyMine;
+
+    private android.widget.ProgressBar progressBar;
+
+    private com.google.android.material.switchmaterial.SwitchMaterial switchMyEvents;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
