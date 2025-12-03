@@ -16,16 +16,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Dashboard"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="#3F51B5"
-                android:gravity="center"
-                android:padding="16dp"
-                android:background="#E8EAF6"/>
+
 
             <EditText
                 android:id="@+id/etEventName"

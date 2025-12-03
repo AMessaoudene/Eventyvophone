@@ -6,14 +6,7 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tvManageTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Participation requests"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:paddingBottom="8dp" />
+
 
     <TextView
         android:id="@+id/tvParticipationEmpty"

@@ -103,6 +103,29 @@ public class DashboardActivity extends AppCompatActivity {
             imagePickerLauncher.launch(intent);
         });
 
+        // Date Pickers
+        View.OnClickListener dateClickListener = v -> {
+            final EditText editText = (EditText) v;
+            java.util.Calendar c = java.util.Calendar.getInstance();
+            int year = c.get(java.util.Calendar.YEAR);
+            int month = c.get(java.util.Calendar.MONTH);
+            int day = c.get(java.util.Calendar.DAY_OF_MONTH);
+
+            new android.app.DatePickerDialog(this, (view, year1, month1, dayOfMonth) -> {
+                // Format: YYYY-MM-DD
+                String date = String.format(java.util.Locale.getDefault(), "%04d-%02d-%02d", year1, month1 + 1, dayOfMonth);
+                editText.setText(date);
+            }, year, month, day).show();
+        };
+
+        etStartDate.setOnClickListener(dateClickListener);
+        etStartDate.setFocusable(false); // Disable manual typing
+        etStartDate.setClickable(true);
+
+        etEndDate.setOnClickListener(dateClickListener);
+        etEndDate.setFocusable(false); // Disable manual typing
+        etEndDate.setClickable(true);
+
         cbOnline.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 etLocation.setVisibility(View.GONE);
