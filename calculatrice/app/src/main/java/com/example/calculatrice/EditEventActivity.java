@@ -25,8 +25,8 @@ public class EditEventActivity extends AppCompatActivity {
     private ImageView imgPreview;
     private Button btnPickPhoto, btnSave;
     private Uri selectedImageUri;
-    private AppDatabase db;
-    private long eventId;
+    private FirestoreHelper firestoreHelper;
+    private String eventId;
     private EventEntity current;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -43,9 +43,22 @@ public class EditEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
 
-        db = AppDatabase.getInstance(this);
-        eventId = getIntent().getLongExtra("eventId", -1);
-        if (eventId == -1) finish();
+        firestoreHelper = new FirestoreHelper();
+        
+        // Retrieve the EventEntity object passed from EventDetailActivity
+        current = (EventEntity) getIntent().getSerializableExtra("event");
+        
+        if (current != null) {
+            eventId = current.id;
+        } else {
+            // Fallback: try to get ID string if object not passed (though we expect object)
+            eventId = getIntent().getStringExtra("eventId");
+            if (eventId == null) {
+                Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+        }
 
         etName = findViewById(R.id.etEventName);
         etStartDate = findViewById(R.id.etStartDate);
@@ -68,7 +81,11 @@ public class EditEventActivity extends AppCompatActivity {
         etStartDate.setOnClickListener(v -> showDatePicker(etStartDate));
         etEndDate.setOnClickListener(v -> showDatePicker(etEndDate));
 
-        loadEvent();
+        // If we have the object, populate fields immediately. 
+        // If we only had ID, we would need to fetch it, but let's assume object is passed as per new flow.
+        if (current != null) {
+            populateFields();
+        }
 
         btnSave.setOnClickListener(v -> saveChanges());
     }
@@ -83,14 +100,7 @@ public class EditEventActivity extends AppCompatActivity {
         dpd.show();
     }
 
-    private void loadEvent() {
-        current = db.eventDao().getEventById(eventId);
-        if (current == null) {
-            Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
+    private void populateFields() {
         etName.setText(current.name);
         etStartDate.setText(current.startDate);
         etEndDate.setText(current.endDate);
@@ -146,20 +156,31 @@ public class EditEventActivity extends AppCompatActivity {
             return;
         }
 
-        // Create updated EventEntity
-        EventEntity updated = new EventEntity(
-                name, start, end,
-                location, meet,
-                online, free,
-                desc, imageUriStr,
-                current.organizerId, participation
-        );
-        updated.id = eventId; // Set the ID so Room knows which row to update
+        // Update current object
+        current.name = name;
+        current.startDate = start;
+        current.endDate = end;
+        current.location = location;
+        current.meetLink = meet;
+        current.isOnline = online;
+        current.isFree = free;
+        current.description = desc;
+        current.imageUri = imageUriStr;
+        current.hasParticipationForm = participation;
+        // id and organizerId remain unchanged
 
-        // Update in DB
-        db.eventDao().update(updated);
+        // Update in Firestore
+        firestoreHelper.updateEvent(current, new FirestoreHelper.OnComplete<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Toast.makeText(EditEventActivity.this, "Event updated", Toast.LENGTH_SHORT).show();
+                finish();
+            }
 
-        Toast.makeText(this, "Event updated", Toast.LENGTH_SHORT).show();
-        finish();
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(EditEventActivity.this, "Failed to update event: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

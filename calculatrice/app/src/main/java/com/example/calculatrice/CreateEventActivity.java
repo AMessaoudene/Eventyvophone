@@ -25,8 +25,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private CheckBox cbOnline, cbFree, cbParticipationForm;
     private ImageView imgPreview;
     private Uri selectedImageUri;
-    private long userId;
-    private AppDatabase db;
+    private String userId;
+    private FirestoreHelper firestoreHelper;
     private Button btnPickPhoto, btnCreate;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher =
@@ -48,8 +48,13 @@ public class CreateEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_event);
 
-        db = AppDatabase.getInstance(this);
-        userId = getIntent().getLongExtra("userId", -1);
+        firestoreHelper = new FirestoreHelper();
+        userId = SessionManager.getUserId(this);
+        if (userId == null) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         etName = findViewById(R.id.etEventName);
         etStartDate = findViewById(R.id.etStartDate);
@@ -132,8 +137,18 @@ public class CreateEventActivity extends AppCompatActivity {
 
         EventEntity e = new EventEntity(name, start, end, location, meet, online, free,
                 desc, selectedImageUri.toString(), userId, participation);
-        db.eventDao().insert(e);
-        Toast.makeText(this, "Event Created!", Toast.LENGTH_SHORT).show();
-        finish();
+
+        firestoreHelper.addEvent(e, new FirestoreHelper.OnComplete<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Toast.makeText(CreateEventActivity.this, "Event Created!", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+
+            @Override
+            public void onFailure(Exception ex) {
+                Toast.makeText(CreateEventActivity.this, "Failed to create event: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
