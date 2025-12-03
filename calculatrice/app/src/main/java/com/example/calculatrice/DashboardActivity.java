@@ -130,14 +130,19 @@ public class DashboardActivity extends AppCompatActivity {
             if (isChecked) {
                 etLocation.setVisibility(View.GONE);
                 etMeetLink.setVisibility(View.VISIBLE);
-                    startActivity(intent);
-                } else {
-                    startActivity(new Intent(this, ProfileActivity.class));
-                }
-                return true;
+            } else {
+                etLocation.setVisibility(View.VISIBLE);
+                etMeetLink.setVisibility(View.GONE);
             }
-            return false;
         });
+
+        btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
+
+        btnShowEvents.setOnClickListener(v -> startActivity(
+                new Intent(this, EventListActivity.class)
+                        .putExtra("userId", userId)));
+
+        btnDeleteEvent.setOnClickListener(v -> confirmDelete());
     }
 
     private void populateForm(EventEntity event) {
