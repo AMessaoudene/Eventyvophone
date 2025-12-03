@@ -24,6 +24,7 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
     private EventEntity event;
     private ParticipationManageAdapter adapter;
     private android.widget.ProgressBar progressBar;
+    private TextView tvEmpty;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

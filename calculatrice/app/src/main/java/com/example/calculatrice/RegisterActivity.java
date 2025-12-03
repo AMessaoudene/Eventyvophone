@@ -19,6 +19,7 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirestoreHelper firestoreHelper;
     private android.widget.ProgressBar progressBar;
+    private boolean redirectToProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

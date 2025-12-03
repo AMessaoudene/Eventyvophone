@@ -17,7 +17,10 @@ public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_REDIRECT_TO_PROFILE = "redirect_to_profile";
 
     private EditText etEmail;
+    private EditText etPassword;
     private android.widget.ProgressBar progressBar;
+    private FirebaseAuth mAuth;
+    private boolean redirectToProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +49,25 @@ public class LoginActivity extends AppCompatActivity {
         );
     }
 
-    // ... onNewIntent and onStart remain same ...
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        redirectToProfile = intent.getBooleanExtra(EXTRA_REDIRECT_TO_PROFILE, false);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            // User is signed in, check if we need to redirect or just go to dashboard
+            // But wait, if they are signed in, we should probably just go to dashboard/profile
+            // unless they explicitly logged out.
+            // For now, let's just fetch and navigate to be safe and ensure session is fresh.
+            fetchUserAndNavigate(currentUser.getUid());
+        }
+    }
 
     private void login() {
         String email = etEmail.getText().toString().trim();

@@ -217,27 +217,7 @@ public class EventDetailActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void confirmDelete() {
-        new AlertDialog.Builder(this)
-                .setTitle("Delete event")
-                .setMessage("Do you really want to delete this event?")
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    firestoreHelper.deleteEvent(event.id, new FirestoreHelper.OnComplete<Void>() {
-                        @Override
-                        public void onSuccess(Void result) {
-                            Toast.makeText(EventDetailActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            Toast.makeText(EventDetailActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                })
-                .show();
-    }
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
