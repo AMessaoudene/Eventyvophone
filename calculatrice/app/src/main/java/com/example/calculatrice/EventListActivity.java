@@ -16,15 +16,7 @@ import java.util.List;
 public class EventListActivity extends AppCompatActivity {
 
     private RecyclerView rvEvents;
-    private TextView tvEmptyState;
-    private EventAdapter adapter;
-    private FirestoreHelper firestoreHelper;
-    private String userId;
-    private boolean showOnlyMine;
-
-    private android.widget.ProgressBar progressBar;
-
-    private com.google.android.material.switchmaterial.SwitchMaterial switchMyEvents;
+    private TextView tvStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +36,7 @@ public class EventListActivity extends AppCompatActivity {
         tvEmptyState = findViewById(R.id.tvEmptyEvents);
         progressBar = findViewById(R.id.progressBar);
         switchMyEvents = findViewById(R.id.switchMyEvents);
+        tvStatus = findViewById(R.id.tvListStatus);
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabAddEvent);
 
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
@@ -70,11 +63,6 @@ public class EventListActivity extends AppCompatActivity {
             switchMyEvents.setChecked(false); // Force unchecked by default
             switchMyEvents.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 showOnlyMine = isChecked;
-                if (isChecked) {
-                    android.widget.Toast.makeText(this, "Showing only MY events", android.widget.Toast.LENGTH_SHORT).show();
-                } else {
-                    android.widget.Toast.makeText(this, "Showing ALL Public events", android.widget.Toast.LENGTH_SHORT).show();
-                }
                 loadEvents();
             });
         } else {
@@ -95,13 +83,21 @@ public class EventListActivity extends AppCompatActivity {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
         
+        if (showOnlyMine) {
+            tvStatus.setText("VIEWING: MY EVENTS ONLY");
+            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#FF9800")); // Orange
+        } else {
+            tvStatus.setText("VIEWING: ALL PUBLIC EVENTS");
+            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50")); // Green
+        }
+
         FirestoreHelper.OnComplete<List<EventEntity>> callback = new FirestoreHelper.OnComplete<List<EventEntity>>() {
             @Override
             public void onSuccess(List<EventEntity> events) {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 adapter.updateData(events);
                 boolean isEmpty = events == null || events.isEmpty();
-                tvEmptyState.setText("No events available yet. (Public Mode Active)");
+                tvEmptyState.setText(showOnlyMine ? "You have no events." : "No public events found.");
                 tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
             }
 
