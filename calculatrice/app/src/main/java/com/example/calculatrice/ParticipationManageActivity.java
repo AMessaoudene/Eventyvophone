@@ -40,15 +40,12 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
             return;
         }
 
-        TextView tvTitle = findViewById(R.id.tvManageTitle);
         tvEmpty = findViewById(R.id.tvParticipationEmpty);
         progressBar = findViewById(R.id.progressBar);
         RecyclerView rvList = findViewById(R.id.rvParticipationList);
         rvList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ParticipationManageAdapter(this);
         rvList.setAdapter(adapter);
-
-        tvTitle.setText("Participation requests");
 
         loadParticipations();
     }
