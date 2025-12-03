@@ -64,6 +64,12 @@ public class EventListActivity extends AppCompatActivity {
         switchMyEvents = findViewById(R.id.switchMyEvents);
         tvStatus = findViewById(R.id.tvListStatus);
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabAddEvent);
+        
+        // Notification Bell Logic
+        android.widget.ImageView btnNotifications = findViewById(R.id.btnNotifications);
+        btnNotifications.setOnClickListener(v -> {
+            startActivity(new Intent(this, NotificationActivity.class));
+        });
 
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
         adapter = new EventAdapter(null);
@@ -142,20 +148,7 @@ public class EventListActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(android.view.Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(android.view.MenuItem item) {
-        if (item.getItemId() == R.id.action_notifications) {
-            startActivity(new Intent(this, NotificationActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);

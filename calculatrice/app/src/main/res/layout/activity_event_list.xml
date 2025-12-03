@@ -6,14 +6,31 @@
     android:orientation="vertical">
 
     <!-- Header -->
-    <TextView
+    <!-- Header -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Events"
-        android:textSize="20sp"
-        android:gravity="center"
-        android:padding="12dp"
-        android:background="#E8EAF6" />
+        android:background="#E8EAF6"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Events"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"/>
+
+        <ImageView
+            android:id="@+id/btnNotifications"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_popup_reminder"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="Notifications"
+            app:tint="#000000"/>
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/tvListStatus"
