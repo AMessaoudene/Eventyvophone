@@ -1,5 +1,6 @@
 package com.example.calculatrice;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -8,6 +9,7 @@ import java.io.Serializable;
 @Entity(tableName = "events")
 public class EventEntity implements Serializable {
     @PrimaryKey(autoGenerate = false) // Firestore generates ID
+    @NonNull
     public String id;
 
     public String name;

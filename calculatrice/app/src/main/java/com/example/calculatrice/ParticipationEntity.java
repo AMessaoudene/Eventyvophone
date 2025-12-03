@@ -1,5 +1,6 @@
 package com.example.calculatrice;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -7,6 +8,7 @@ import androidx.room.PrimaryKey;
 public class ParticipationEntity {
 
     @PrimaryKey(autoGenerate = false)
+    @NonNull
     public String id;
 
     public String eventId;
