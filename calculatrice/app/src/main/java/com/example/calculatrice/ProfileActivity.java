@@ -38,6 +38,7 @@ public class ProfileActivity extends AppCompatActivity {
         TextView tvUsername = findViewById(R.id.tvProfileUsername);
         TextView tvUserId = findViewById(R.id.tvProfileId);
         EditText etNewUsername = findViewById(R.id.etNewUsername);
+        EditText etNewEmail = findViewById(R.id.etNewEmail);
         EditText etNewPassword = findViewById(R.id.etNewPassword);
         EditText etConfirmNewPassword = findViewById(R.id.etConfirmNewPassword);
         Button btnUpdateProfile = findViewById(R.id.btnUpdateProfile);
@@ -46,6 +47,7 @@ public class ProfileActivity extends AppCompatActivity {
         if (user != null) {
             tvUsername.setText(user.username);
             tvUserId.setText("User ID: " + user.id);
+            etNewEmail.setText(user.email);
         } else {
             tvUsername.setText("Unknown user");
             tvUserId.setText("");
@@ -58,10 +60,11 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             String newUsername = etNewUsername.getText().toString().trim();
+            String newEmail = etNewEmail.getText().toString().trim();
             String newPassword = etNewPassword.getText().toString().trim();
             String confirmPassword = etConfirmNewPassword.getText().toString().trim();
 
-            if (TextUtils.isEmpty(newUsername) && TextUtils.isEmpty(newPassword)) {
+            if (TextUtils.isEmpty(newUsername) && TextUtils.isEmpty(newPassword) && TextUtils.isEmpty(newEmail)) {
                 Toast.makeText(this, "Nothing to update", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -78,6 +81,20 @@ public class ProfileActivity extends AppCompatActivity {
                     return;
                 }
                 user.username = newUsername;
+            }
+
+            // Validate and update email
+            if (!TextUtils.isEmpty(newEmail)) {
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
+                    Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                User existing = db.userDao().findByEmail(newEmail);
+                if (existing != null && existing.id != user.id) {
+                    Toast.makeText(this, "Email already taken", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                user.email = newEmail;
             }
 
             // Validate and update password
@@ -99,6 +116,7 @@ public class ProfileActivity extends AppCompatActivity {
             tvUsername.setText(user.username);
             tvUserId.setText("User ID: " + user.id);
             etNewUsername.setText("");
+            etNewEmail.setText(user.email);
             etNewPassword.setText("");
             etConfirmNewPassword.setText("");
 

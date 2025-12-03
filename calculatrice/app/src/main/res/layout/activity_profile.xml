@@ -55,6 +55,14 @@
                 android:layout_marginBottom="8dp" />
 
             <EditText
+                android:id="@+id/etNewEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="New email (optional)"
+                android:inputType="textEmailAddress"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
                 android:id="@+id/etNewPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

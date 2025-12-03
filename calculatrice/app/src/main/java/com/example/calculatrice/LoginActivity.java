@@ -39,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.tvForgotPassword).setOnClickListener(v -> 
-            Toast.makeText(this, "Un email de réinitialisation a été envoyé", Toast.LENGTH_LONG).show()
+            startActivity(new Intent(this, ForgotPasswordActivity.class))
         );
     }
 

@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class RegisterActivity extends AppCompatActivity {
 
     private EditText etUsername;
+    private EditText etEmail;
     private EditText etPassword;
     private EditText etConfirmPassword;
     private AppDatabase db;
@@ -26,6 +27,7 @@ public class RegisterActivity extends AppCompatActivity {
         redirectToProfile = getIntent().getBooleanExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, false);
 
         etUsername = findViewById(R.id.etRegUsername);
+        etEmail = findViewById(R.id.etRegEmail);
         etPassword = findViewById(R.id.etRegPassword);
         etConfirmPassword = findViewById(R.id.etRegConfirmPassword);
 
@@ -43,11 +45,17 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void register() {
         String username = etUsername.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirm = etConfirmPassword.getText().toString().trim();
 
-        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirm)) {
+        if (TextUtils.isEmpty(username) || TextUtils.isEmpty(email) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirm)) {
             Toast.makeText(this, "Fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Invalid email address");
             return;
         }
 
@@ -70,8 +78,14 @@ public class RegisterActivity extends AppCompatActivity {
             Toast.makeText(this, "Username already taken", Toast.LENGTH_SHORT).show();
             return;
         }
+        
+        User existingEmail = db.userDao().findByEmail(email);
+        if (existingEmail != null) {
+            Toast.makeText(this, "Email already registered", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        long userId = db.userDao().insert(new User(username, password));
+        long userId = db.userDao().insert(new User(username, password, email));
         User created = db.userDao().getById(userId);
         SessionManager.saveUser(this, created);
         Toast.makeText(this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
