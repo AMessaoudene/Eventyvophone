@@ -126,7 +126,8 @@ public class LoginActivity extends AppCompatActivity {
         if (redirectToProfile) {
             startActivity(new Intent(this, ProfileActivity.class));
         } else {
-            Intent intent = new Intent(this, DashboardActivity.class);
+            Intent intent = new Intent(this, EventListActivity.class);
+            intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC);
             startActivity(intent);
         }
     }

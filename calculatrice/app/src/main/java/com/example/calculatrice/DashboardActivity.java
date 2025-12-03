@@ -164,12 +164,27 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
+        // Dashboard is not really a nav item anymore, it's a modal/form.
+        // But we highlight nothing or maybe Home if we consider it part of home flow?
+        // Actually, if we are in Dashboard, we are creating an event.
+        // Let's uncheck all items or just leave it.
+        bottomNav.getMenu().setGroupCheckable(0, false, true);
+
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.nav_events) {
-                startActivity(new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId));
+            if (id == R.id.nav_home) {
+                Intent intent = new Intent(this, EventListActivity.class);
+                intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC);
+                intent.putExtra("userId", userId);
+                startActivity(intent);
+                finish();
+                return true;
+            } else if (id == R.id.nav_events) {
+                Intent intent = new Intent(this, EventListActivity.class);
+                intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_MINE);
+                intent.putExtra("userId", userId);
+                startActivity(intent);
+                finish();
                 return true;
             } else if (id == R.id.nav_profile) {
                 String loggedId = SessionManager.getUserId(this);

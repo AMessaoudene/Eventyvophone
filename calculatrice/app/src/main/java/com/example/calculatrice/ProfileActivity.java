@@ -144,15 +144,14 @@ public class ProfileActivity extends AppCompatActivity {
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
-                String loggedId = SessionManager.getUserId(this);
-                if (loggedId == null) {
-                    startActivity(new Intent(this, MainActivity.class));
-                } else {
-                    startActivity(new Intent(this, DashboardActivity.class));
-                }
+                Intent intent = new Intent(this, EventListActivity.class);
+                intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC);
+                startActivity(intent);
                 return true;
             } else if (id == R.id.nav_events) {
-                startActivity(new Intent(this, EventListActivity.class));
+                Intent intent = new Intent(this, EventListActivity.class);
+                intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_MINE);
+                startActivity(intent);
                 return true;
             } else if (id == R.id.nav_profile) {
                 // already here

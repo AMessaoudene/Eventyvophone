@@ -15,17 +15,11 @@ import java.util.List;
 
 public class EventListActivity extends AppCompatActivity {
 
-    private RecyclerView rvEvents;
-    private TextView tvEmptyState;
-    private TextView tvStatus;
-    private EventAdapter adapter;
-    private FirestoreHelper firestoreHelper;
-    private String userId;
-    private boolean showOnlyMine;
+    public static final String EXTRA_MODE = "mode";
+    public static final String MODE_PUBLIC = "PUBLIC";
+    public static final String MODE_MINE = "MINE";
 
-    private android.widget.ProgressBar progressBar;
-
-    private com.google.android.material.switchmaterial.SwitchMaterial switchMyEvents;
+    private String currentMode = MODE_PUBLIC;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +31,18 @@ public class EventListActivity extends AppCompatActivity {
         if (userId == null) {
             userId = SessionManager.getUserId(this);
         }
-        
-        // Always start with showing ALL events (Public)
-        showOnlyMine = false;
+
+        // Determine Mode
+        String modeExtra = getIntent().getStringExtra(EXTRA_MODE);
+        if (modeExtra != null) {
+            currentMode = modeExtra;
+        } else {
+            // Default to Public if not specified
+            currentMode = MODE_PUBLIC;
+        }
+
+        // Force showOnlyMine based on mode
+        showOnlyMine = MODE_MINE.equals(currentMode);
 
         rvEvents = findViewById(R.id.rvEvents);
         tvEmptyState = findViewById(R.id.tvEmptyEvents);
@@ -53,12 +56,12 @@ public class EventListActivity extends AppCompatActivity {
         adapter.setOnItemClickListener(event -> {
             Intent intent = new Intent(this, EventDetailActivity.class);
             intent.putExtra("eventId", event.id);
-            intent.putExtra("event", event); // Pass object to avoid re-fetch
+            intent.putExtra("event", event);
             startActivity(intent);
         });
         rvEvents.setAdapter(adapter);
 
-        // Show FAB only if user is logged in
+        // FAB Logic
         if (userId != null) {
             fab.setVisibility(View.VISIBLE);
             fab.setOnClickListener(v -> {
@@ -66,18 +69,12 @@ public class EventListActivity extends AppCompatActivity {
                 intent.putExtra("userId", userId);
                 startActivity(intent);
             });
-            
-            // Show toggle only if logged in
-            switchMyEvents.setVisibility(View.VISIBLE);
-            switchMyEvents.setChecked(false); // Force unchecked by default
-            switchMyEvents.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                showOnlyMine = isChecked;
-                loadEvents();
-            });
         } else {
             fab.setVisibility(View.GONE);
-            switchMyEvents.setVisibility(View.GONE);
         }
+
+        // Toggle Logic - Hide it! We use tabs now.
+        switchMyEvents.setVisibility(View.GONE); 
 
         setupBottomNav();
     }
@@ -86,20 +83,26 @@ public class EventListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadEvents();
+        updateUIForMode();
+    }
+
+    private void updateUIForMode() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (MODE_MINE.equals(currentMode)) {
+            tvStatus.setText("MY EVENTS (Organizer)");
+            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#FF9800")); // Orange
+            bottomNav.setSelectedItemId(R.id.nav_events);
+        } else {
+            tvStatus.setText("ACCUEIL - PUBLIC EVENTS");
+            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50")); // Green
+            bottomNav.setSelectedItemId(R.id.nav_home);
+        }
     }
 
     private void loadEvents() {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
         
-        if (showOnlyMine) {
-            tvStatus.setText("VIEWING: MY EVENTS ONLY");
-            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#FF9800")); // Orange
-        } else {
-            tvStatus.setText("VIEWING: ALL PUBLIC EVENTS");
-            tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50")); // Green
-        }
-
         FirestoreHelper.OnComplete<List<EventEntity>> callback = new FirestoreHelper.OnComplete<List<EventEntity>>() {
             @Override
             public void onSuccess(List<EventEntity> events) {
@@ -127,19 +130,39 @@ public class EventListActivity extends AppCompatActivity {
 
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_events);
+        // Selection is handled in updateUIForMode
+        
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
-                if (SessionManager.getUserId(this) == null) {
-                    startActivity(new Intent(this, MainActivity.class));
-                } else {
-                    startActivity(new Intent(this, DashboardActivity.class).putExtra("userId", userId));
+                if (!MODE_PUBLIC.equals(currentMode)) {
+                    Intent intent = new Intent(this, EventListActivity.class);
+                    intent.putExtra(EXTRA_MODE, MODE_PUBLIC);
+                    intent.putExtra("userId", userId);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK); 
+                    startActivity(intent);
+                    finish(); // Close current activity to avoid stacking
+                    overridePendingTransition(0, 0); // No animation
+                }
+                return true;
+            } else if (id == R.id.nav_events) {
+                if (userId == null) {
+                     Toast.makeText(this, "Please login to view your events", Toast.LENGTH_SHORT).show();
+                     startActivity(new Intent(this, LoginActivity.class));
+                     return false;
+                }
+                if (!MODE_MINE.equals(currentMode)) {
+                    Intent intent = new Intent(this, EventListActivity.class);
+                    intent.putExtra(EXTRA_MODE, MODE_MINE);
+                    intent.putExtra("userId", userId);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                    overridePendingTransition(0, 0);
                 }
                 return true;
             } else if (id == R.id.nav_profile) {
-                String loggedId = SessionManager.getUserId(this);
-                if (loggedId == null) {
+                if (userId == null) {
                     Intent intent = new Intent(this, LoginActivity.class);
                     intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
                     startActivity(intent);
@@ -148,7 +171,7 @@ public class EventListActivity extends AppCompatActivity {
                 }
                 return true;
             }
-            return true;
+            return false;
         });
     }
 }
