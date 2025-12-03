@@ -16,7 +16,16 @@ import java.util.List;
 public class EventListActivity extends AppCompatActivity {
 
     private RecyclerView rvEvents;
+    private TextView tvEmptyState;
     private TextView tvStatus;
+    private EventAdapter adapter;
+    private FirestoreHelper firestoreHelper;
+    private String userId;
+    private boolean showOnlyMine;
+
+    private android.widget.ProgressBar progressBar;
+
+    private com.google.android.material.switchmaterial.SwitchMaterial switchMyEvents;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
