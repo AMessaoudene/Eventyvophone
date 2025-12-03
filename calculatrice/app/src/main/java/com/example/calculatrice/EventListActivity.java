@@ -101,7 +101,7 @@ public class EventListActivity extends AppCompatActivity {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 adapter.updateData(events);
                 boolean isEmpty = events == null || events.isEmpty();
-                tvEmptyState.setText("No events available yet.");
+                tvEmptyState.setText("No events available yet. (Public Mode Active)");
                 tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
             }
 
