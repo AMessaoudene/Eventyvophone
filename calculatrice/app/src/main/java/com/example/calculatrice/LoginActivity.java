@@ -59,8 +59,13 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            navigateAfterAuth();
-            finish();
+            // Check if session exists, if not, fetch and save
+            if (SessionManager.getUserId(this) == null) {
+                fetchUserAndNavigate(currentUser.getUid());
+            } else {
+                navigateAfterAuth();
+                finish();
+            }
         }
     }
 
@@ -76,13 +81,35 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        navigateAfterAuth();
-                        finish();
+                        fetchUserAndNavigate(mAuth.getCurrentUser().getUid());
                     } else {
                         Toast.makeText(this, "Authentication failed: " + task.getException().getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void fetchUserAndNavigate(String uid) {
+        new FirestoreHelper().getUser(uid, new FirestoreHelper.OnComplete<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null) {
+                    SessionManager.saveUser(LoginActivity.this, uid, user.username);
+                    navigateAfterAuth();
+                    finish();
+                } else {
+                    // User in Auth but not in Firestore (rare inconsistency)
+                    Toast.makeText(LoginActivity.this, "User profile not found", Toast.LENGTH_SHORT).show();
+                    mAuth.signOut();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(LoginActivity.this, "Failed to fetch profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                // Optional: allow login anyway with just UID? For now, fail safe.
+            }
+        });
     }
 
     private void navigateAfterAuth() {
