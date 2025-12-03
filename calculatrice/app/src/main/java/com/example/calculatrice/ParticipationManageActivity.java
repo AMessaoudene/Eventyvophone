@@ -23,7 +23,7 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
     private String eventId;
     private EventEntity event;
     private ParticipationManageAdapter adapter;
-    private TextView tvEmpty;
+    private android.widget.ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +34,6 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
         eventId = getIntent().getStringExtra("eventId");
         String userId = SessionManager.getUserId(this);
 
-        // We need to fetch event to check ownership if not passed?
-        // Actually, we can just proceed. If eventId is null, finish.
         if (eventId == null || userId == null) {
             finish();
             return;
@@ -43,12 +41,13 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
 
         TextView tvTitle = findViewById(R.id.tvManageTitle);
         tvEmpty = findViewById(R.id.tvParticipationEmpty);
+        progressBar = findViewById(R.id.progressBar);
         RecyclerView rvList = findViewById(R.id.rvParticipationList);
         rvList.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ParticipationManageAdapter(this);
         rvList.setAdapter(adapter);
 
-        tvTitle.setText("Participation requests"); // We can fetch event name if we want, but "Participation requests" is fine.
+        tvTitle.setText("Participation requests");
 
         loadParticipations();
     }
@@ -60,15 +59,21 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
     }
 
     private void loadParticipations() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        tvEmpty.setVisibility(View.GONE);
+
         firestoreHelper.getParticipations(eventId, new FirestoreHelper.OnComplete<List<ParticipationEntity>>() {
             @Override
             public void onSuccess(List<ParticipationEntity> entries) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 adapter.submit(entries);
+                tvEmpty.setText("No participation requests yet.");
                 tvEmpty.setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
             @Override
             public void onFailure(Exception e) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 tvEmpty.setText("Error loading participations: " + e.getMessage());
                 tvEmpty.setVisibility(View.VISIBLE);
             }

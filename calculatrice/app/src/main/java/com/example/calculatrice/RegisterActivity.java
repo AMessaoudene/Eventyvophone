@@ -18,7 +18,7 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText etConfirmPassword;
     private FirebaseAuth mAuth;
     private FirestoreHelper firestoreHelper;
-    private boolean redirectToProfile;
+    private android.widget.ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etRegEmail);
         etPassword = findViewById(R.id.etRegPassword);
         etConfirmPassword = findViewById(R.id.etRegConfirmPassword);
+        progressBar = findViewById(R.id.progressBar);
 
         Button btnCreate = findViewById(R.id.btnCreateAccount);
         Button btnBackToLogin = findViewById(R.id.btnBackToLogin);
@@ -76,6 +77,7 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        showLoading(true);
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
@@ -83,6 +85,7 @@ public class RegisterActivity extends AppCompatActivity {
                         firestoreHelper.addUser(uid, username, email, new FirestoreHelper.OnComplete<Void>() {
                             @Override
                             public void onSuccess(Void result) {
+                                showLoading(false);
                                 SessionManager.saveUser(RegisterActivity.this, uid, username);
                                 Toast.makeText(RegisterActivity.this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
                                 NotificationHelper.showNotification(RegisterActivity.this, "Welcome!", "Account created successfully for " + username);
@@ -91,13 +94,23 @@ public class RegisterActivity extends AppCompatActivity {
 
                             @Override
                             public void onFailure(Exception e) {
+                                showLoading(false);
                                 Toast.makeText(RegisterActivity.this, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         });
                     } else {
+                        showLoading(false);
                         Toast.makeText(this, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void showLoading(boolean isLoading) {
+        if (progressBar != null) {
+            progressBar.setVisibility(isLoading ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+        findViewById(R.id.btnCreateAccount).setEnabled(!isLoading);
+        findViewById(R.id.btnBackToLogin).setEnabled(!isLoading);
     }
 
     private void navigateAfterAuth() {

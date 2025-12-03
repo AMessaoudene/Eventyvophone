@@ -18,6 +18,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private FirestoreHelper firestoreHelper;
     private User currentUser;
+    private android.widget.ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class ProfileActivity extends AppCompatActivity {
         EditText etConfirmNewPassword = findViewById(R.id.etConfirmNewPassword);
         Button btnUpdateProfile = findViewById(R.id.btnUpdateProfile);
         Button btnLogout = findViewById(R.id.btnLogout);
+        progressBar = findViewById(R.id.progressBar);
 
         // Fetch user from Firestore
         firestoreHelper.getUser(userId, new FirestoreHelper.OnComplete<User>() {
@@ -81,10 +83,6 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            // Update Username/Email in Firestore
-            // Note: Updating Email in Auth requires re-authentication usually, skipping for now or just updating Firestore
-            // Updating Password in Auth requires mAuth.currentUser.updatePassword()
-
             if (!TextUtils.isEmpty(newUsername)) {
                 if (newUsername.length() < 4) {
                     Toast.makeText(this, "Username must be at least 4 characters", Toast.LENGTH_SHORT).show();
@@ -97,6 +95,8 @@ public class ProfileActivity extends AppCompatActivity {
                  currentUser.email = newEmail;
             }
 
+            showLoading(true);
+
             // Save to Firestore
             firestoreHelper.addUser(userId, currentUser.username, currentUser.email, new FirestoreHelper.OnComplete<Void>() {
                 @Override
@@ -108,36 +108,21 @@ public class ProfileActivity extends AppCompatActivity {
                     
                     Toast.makeText(ProfileActivity.this, "Profile updated", Toast.LENGTH_SHORT).show();
                     NotificationHelper.showNotification(ProfileActivity.this, "Profile Updated", "Your profile details have been updated.");
+                    
+                    // Password update (Firebase Auth) - nested to ensure sequence or parallel
+                    if (!TextUtils.isEmpty(newPassword)) {
+                        updatePassword(newPassword, confirmPassword);
+                    } else {
+                        showLoading(false);
+                    }
                 }
 
                 @Override
                 public void onFailure(Exception e) {
+                    showLoading(false);
                     Toast.makeText(ProfileActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
-
-            // Password update (Firebase Auth)
-            if (!TextUtils.isEmpty(newPassword)) {
-                if (newPassword.length() < 6) {
-                    Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (!newPassword.equals(confirmPassword)) {
-                    Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                
-                FirebaseAuth.getInstance().getCurrentUser().updatePassword(newPassword)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                             Toast.makeText(this, "Password updated", Toast.LENGTH_SHORT).show();
-                             etNewPassword.setText("");
-                             etConfirmNewPassword.setText("");
-                        } else {
-                             Toast.makeText(this, "Password update failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-            }
         });
 
         btnLogout.setOnClickListener(v -> {
@@ -175,6 +160,39 @@ public class ProfileActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    private void updatePassword(String newPassword, String confirmPassword) {
+        if (newPassword.length() < 6) {
+            showLoading(false);
+            Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            showLoading(false);
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseAuth.getInstance().getCurrentUser().updatePassword(newPassword)
+                .addOnCompleteListener(task -> {
+                    showLoading(false);
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Password updated", Toast.LENGTH_SHORT).show();
+                        ((EditText)findViewById(R.id.etNewPassword)).setText("");
+                        ((EditText)findViewById(R.id.etConfirmNewPassword)).setText("");
+                    } else {
+                        Toast.makeText(this, "Password update failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void showLoading(boolean isLoading) {
+        if (progressBar != null) {
+            progressBar.setVisibility(isLoading ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+        findViewById(R.id.btnUpdateProfile).setEnabled(!isLoading);
+        findViewById(R.id.btnLogout).setEnabled(!isLoading);
     }
 
     @Override

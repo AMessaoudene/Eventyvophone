@@ -22,6 +22,8 @@ public class EventListActivity extends AppCompatActivity {
     private String userId;
     private boolean showOnlyMine;
 
+    private android.widget.ProgressBar progressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,13 +38,10 @@ public class EventListActivity extends AppCompatActivity {
 
         rvEvents = findViewById(R.id.rvEvents);
         tvEmptyState = findViewById(R.id.tvEmptyEvents);
+        progressBar = findViewById(R.id.progressBar);
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
         adapter = new EventAdapter(null);
         adapter.setOnItemClickListener(event -> {
-            // If the user is the organizer, go to Dashboard (Edit), else go to Details (View/Participate)
-            // But wait, the original code went to EventDetailActivity.
-            // Let's stick to EventDetailActivity for now, or check logic.
-            // Actually, usually Details shows info and "Edit" button if owner.
             Intent intent = new Intent(this, EventDetailActivity.class);
             intent.putExtra("eventId", event.id);
             intent.putExtra("event", event); // Pass object to avoid re-fetch
@@ -60,16 +59,22 @@ public class EventListActivity extends AppCompatActivity {
     }
 
     private void loadEvents() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        tvEmptyState.setVisibility(View.GONE);
+        
         FirestoreHelper.OnComplete<List<EventEntity>> callback = new FirestoreHelper.OnComplete<List<EventEntity>>() {
             @Override
             public void onSuccess(List<EventEntity> events) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 adapter.updateData(events);
                 boolean isEmpty = events == null || events.isEmpty();
+                tvEmptyState.setText("No events available yet.");
                 tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
             }
 
             @Override
             public void onFailure(Exception e) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
                 tvEmptyState.setText("Error loading events: " + e.getMessage());
                 tvEmptyState.setVisibility(View.VISIBLE);
             }

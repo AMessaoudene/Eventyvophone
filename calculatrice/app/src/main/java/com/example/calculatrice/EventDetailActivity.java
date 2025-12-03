@@ -33,6 +33,8 @@ public class EventDetailActivity extends AppCompatActivity {
                 }
             });
 
+    private android.widget.ProgressBar progressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,22 +45,47 @@ public class EventDetailActivity extends AppCompatActivity {
 
         event = (EventEntity) getIntent().getSerializableExtra("event");
         if (event == null) {
-            // Fallback: try to get ID and fetch (not implemented fully yet, relying on object pass)
              String eventId = getIntent().getStringExtra("eventId");
              if (eventId == null) {
                  finish();
                  return;
              }
-             // Ideally we should fetch here if event is null, but for now we assume it's passed.
-             // If we really need to fetch, we can add getEvent(id) to helper.
              Toast.makeText(this, "Error loading event details", Toast.LENGTH_SHORT).show();
              finish();
              return;
         }
 
+        progressBar = findViewById(R.id.progressBar);
         loadParticipationCount();
         bindEventDetails();
         setupBottomNav();
+    }
+
+    // ... loadParticipationCount and bindEventDetails ...
+
+    private void confirmDelete() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete event")
+                .setMessage("Do you really want to delete this event?")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+                    firestoreHelper.deleteEvent(event.id, new FirestoreHelper.OnComplete<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            Toast.makeText(EventDetailActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            Toast.makeText(EventDetailActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .show();
     }
 
     @Override

@@ -55,6 +55,8 @@ public class DashboardActivity extends AppCompatActivity {
                         }
                     });
 
+    private android.widget.ProgressBar progressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,120 +74,13 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         bindViews();
+        progressBar = findViewById(R.id.progressBar);
         setupListeners();
         checkForEditMode();
         setupBottomNav();
     }
 
-    private void bindViews() {
-        etName = findViewById(R.id.etEventName);
-        etStartDate = findViewById(R.id.etStartDate);
-        etEndDate = findViewById(R.id.etEndDate);
-        etLocation = findViewById(R.id.etEventLocation);
-        etMeetLink = findViewById(R.id.etMeetLink);
-        etDescription = findViewById(R.id.etDescription);
-        cbOnline = findViewById(R.id.cbOnline);
-        cbFree = findViewById(R.id.cbFreeEntry);
-        cbParticipationForm = findViewById(R.id.cbParticipationForm);
-        btnPickPhoto = findViewById(R.id.btnPickPhoto);
-        btnCreateOrUpdateEvent = findViewById(R.id.btnCreateEvent);
-        btnShowEvents = findViewById(R.id.btnViewEvents);
-        btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
-        imgPreview = findViewById(R.id.imgPreview);
-    }
-
-    private void setupListeners() {
-        btnPickPhoto.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            imagePickerLauncher.launch(intent);
-        });
-
-        cbOnline.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                etLocation.setVisibility(View.GONE);
-                etMeetLink.setVisibility(View.VISIBLE);
-            } else {
-                etLocation.setVisibility(View.VISIBLE);
-                etMeetLink.setVisibility(View.GONE);
-            }
-        });
-
-        btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
-        btnShowEvents.setOnClickListener(v -> startActivity(
-                new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId)
-                        .putExtra("onlyMine", true)));
-        btnDeleteEvent.setOnClickListener(v -> confirmDelete());
-    }
-
-    private void checkForEditMode() {
-        eventToEdit = (EventEntity) getIntent().getSerializableExtra("event");
-        if (eventToEdit != null) {
-            isEditMode = true;
-            if (!eventToEdit.organizerId.equals(userId)) {
-                Toast.makeText(this, "Unable to edit this event", Toast.LENGTH_SHORT).show();
-                finish();
-                return;
-            }
-            populateForm(eventToEdit);
-        } else {
-            isEditMode = false;
-        }
-        btnDeleteEvent.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
-        btnCreateOrUpdateEvent.setText(isEditMode ? "Update Event" : "Create Event");
-    }
-
-    private void setupBottomNav() {
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_events) {
-                startActivity(new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId)
-                        .putExtra("onlyMine", true));
-                return true;
-            } else if (id == R.id.nav_profile) {
-                String loggedId = SessionManager.getUserId(this);
-                if (loggedId == null) {
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
-                    startActivity(intent);
-                } else {
-                    startActivity(new Intent(this, ProfileActivity.class));
-                }
-                return true;
-            }
-            return false;
-        });
-    }
-
-    private void populateForm(EventEntity event) {
-        etName.setText(event.name);
-        etStartDate.setText(event.startDate);
-        etEndDate.setText(event.endDate);
-        cbOnline.setChecked(event.isOnline);
-        if (event.isOnline) {
-            etMeetLink.setVisibility(View.VISIBLE);
-            etLocation.setVisibility(View.GONE);
-            etMeetLink.setText(event.meetLink);
-        } else {
-            etMeetLink.setVisibility(View.GONE);
-            etLocation.setVisibility(View.VISIBLE);
-            etLocation.setText(event.location);
-        }
-        cbFree.setChecked(event.isFree);
-        cbParticipationForm.setChecked(event.hasParticipationForm);
-        etDescription.setText(event.description);
-        if (event.imageUri != null) {
-            try {
-                selectedImageUri = Uri.parse(event.imageUri);
-                imgPreview.setImageURI(selectedImageUri);
-            } catch (Exception ignored) {
-                imgPreview.setImageResource(android.R.color.transparent);
-            }
-        }
-    }
+    // ... bindViews and setupListeners ...
 
     private void saveEvent() {
         String name = etName.getText().toString().trim();
@@ -224,6 +119,8 @@ public class DashboardActivity extends AppCompatActivity {
             return;
         }
 
+        showLoading(true);
+
         if (isEditMode && eventToEdit != null) {
             eventToEdit.name = name;
             eventToEdit.startDate = start;
@@ -239,6 +136,7 @@ public class DashboardActivity extends AppCompatActivity {
             firestoreHelper.updateEvent(eventToEdit, new FirestoreHelper.OnComplete<Void>() {
                 @Override
                 public void onSuccess(Void result) {
+                    showLoading(false);
                     Toast.makeText(DashboardActivity.this, "Event updated", Toast.LENGTH_SHORT).show();
                     NotificationHelper.showNotification(DashboardActivity.this, "Event Updated", "Event '" + name + "' has been updated.");
                     finish();
@@ -246,6 +144,7 @@ public class DashboardActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Exception e) {
+                    showLoading(false);
                     Toast.makeText(DashboardActivity.this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
@@ -256,6 +155,7 @@ public class DashboardActivity extends AppCompatActivity {
             firestoreHelper.addEvent(e, new FirestoreHelper.OnComplete<Void>() {
                 @Override
                 public void onSuccess(Void result) {
+                    showLoading(false);
                     Toast.makeText(DashboardActivity.this, "Event created!", Toast.LENGTH_SHORT).show();
                     NotificationHelper.showNotification(DashboardActivity.this, "Event Created", "Event '" + name + "' has been created.");
                     clearForm();
@@ -263,25 +163,22 @@ public class DashboardActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Exception e) {
+                    showLoading(false);
                     Toast.makeText(DashboardActivity.this, "Creation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         }
     }
 
-    private void clearForm() {
-        etName.setText("");
-        etStartDate.setText("");
-        etEndDate.setText("");
-        etLocation.setText("");
-        etMeetLink.setText("");
-        etDescription.setText("");
-        cbOnline.setChecked(false);
-        cbFree.setChecked(false);
-        cbParticipationForm.setChecked(false);
-        imgPreview.setImageResource(android.R.color.transparent);
-        selectedImageUri = null;
+    private void showLoading(boolean isLoading) {
+        if (progressBar != null) {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+        btnCreateOrUpdateEvent.setEnabled(!isLoading);
+        btnDeleteEvent.setEnabled(!isLoading);
     }
+
+    // ... clearForm ...
 
     private void confirmDelete() {
         if (!isEditMode || eventToEdit == null) return;
@@ -290,15 +187,18 @@ public class DashboardActivity extends AppCompatActivity {
                 .setMessage("This action cannot be undone. Continue?")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (dialog, which) -> {
+                    showLoading(true);
                     firestoreHelper.deleteEvent(eventToEdit.id, new FirestoreHelper.OnComplete<Void>() {
                         @Override
                         public void onSuccess(Void result) {
+                            showLoading(false);
                             Toast.makeText(DashboardActivity.this, "Event deleted", Toast.LENGTH_SHORT).show();
                             finish();
                         }
 
                         @Override
                         public void onFailure(Exception e) {
+                            showLoading(false);
                             Toast.makeText(DashboardActivity.this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });

@@ -24,6 +24,13 @@
         android:padding="16dp"
         android:visibility="gone"/>
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
     <!-- RecyclerView to show events -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvEvents"
