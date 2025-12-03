@@ -39,6 +39,8 @@ public class EventListActivity extends AppCompatActivity {
         rvEvents = findViewById(R.id.rvEvents);
         tvEmptyState = findViewById(R.id.tvEmptyEvents);
         progressBar = findViewById(R.id.progressBar);
+        com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabAddEvent);
+
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
         adapter = new EventAdapter(null);
         adapter.setOnItemClickListener(event -> {
@@ -48,6 +50,18 @@ public class EventListActivity extends AppCompatActivity {
             startActivity(intent);
         });
         rvEvents.setAdapter(adapter);
+
+        // Show FAB only if user is logged in
+        if (userId != null) {
+            fab.setVisibility(View.VISIBLE);
+            fab.setOnClickListener(v -> {
+                Intent intent = new Intent(this, DashboardActivity.class);
+                intent.putExtra("userId", userId);
+                startActivity(intent);
+            });
+        } else {
+            fab.setVisibility(View.GONE);
+        }
 
         setupBottomNav();
     }

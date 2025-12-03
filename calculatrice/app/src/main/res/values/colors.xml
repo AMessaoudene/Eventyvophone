@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3949AB</color> <!-- Indigo 600 -->
+    <color name="colorPrimaryDark">#283593</color> <!-- Indigo 800 -->
+    <color name="colorAccent">#FFC107</color> <!-- Amber 500 -->
+    
+    <color name="textColorPrimary">#212121</color>
+    <color name="textColorSecondary">#757575</color>
+    
+    <color name="backgroundColor">#FAFAFA</color> <!-- Grey 50 -->
+    <color name="cardBackgroundColor">#FFFFFF</color>
+    
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>
