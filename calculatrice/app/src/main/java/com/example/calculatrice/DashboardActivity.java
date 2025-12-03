@@ -130,49 +130,6 @@ public class DashboardActivity extends AppCompatActivity {
             if (isChecked) {
                 etLocation.setVisibility(View.GONE);
                 etMeetLink.setVisibility(View.VISIBLE);
-            } else {
-                etLocation.setVisibility(View.VISIBLE);
-                etMeetLink.setVisibility(View.GONE);
-            }
-        });
-
-        btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
-
-        btnDeleteEvent.setOnClickListener(v -> confirmDelete());
-    }
-
-    private void checkForEditMode() {
-        eventToEdit = (EventEntity) getIntent().getSerializableExtra("event");
-        if (eventToEdit != null) {
-            isEditMode = true;
-            if (!eventToEdit.organizerId.equals(userId)) {
-                Toast.makeText(this, "Unable to edit this event", Toast.LENGTH_SHORT).show();
-                finish();
-                return;
-            }
-            populateForm(eventToEdit);
-        } else {
-            isEditMode = false;
-        }
-        btnDeleteEvent.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
-        btnCreateOrUpdateEvent.setText(isEditMode ? "Update Event" : "Create Event");
-    }
-
-    private void setupBottomNav() {
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_events) {
-                startActivity(new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId)
-                        .putExtra("onlyMine", true));
-                return true;
-            } else if (id == R.id.nav_profile) {
-                String loggedId = SessionManager.getUserId(this);
-                if (loggedId == null) {
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    intent.putExtra(LoginActivity.EXTRA_REDIRECT_TO_PROFILE, true);
                     startActivity(intent);
                 } else {
                     startActivity(new Intent(this, ProfileActivity.class));

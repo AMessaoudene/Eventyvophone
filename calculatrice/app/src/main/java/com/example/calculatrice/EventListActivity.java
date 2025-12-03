@@ -36,7 +36,8 @@ public class EventListActivity extends AppCompatActivity {
         if (userId == null) {
             userId = SessionManager.getUserId(this);
         }
-        // Default: show all events. Toggle allows filtering.
+        
+        // Always start with showing ALL events (Public)
         showOnlyMine = false;
 
         rvEvents = findViewById(R.id.rvEvents);
@@ -88,6 +89,9 @@ public class EventListActivity extends AppCompatActivity {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
         tvEmptyState.setVisibility(View.GONE);
         
+        // Debug feedback
+        // android.widget.Toast.makeText(this, showOnlyMine ? "Showing my events" : "Showing all events", android.widget.Toast.LENGTH_SHORT).show();
+
         FirestoreHelper.OnComplete<List<EventEntity>> callback = new FirestoreHelper.OnComplete<List<EventEntity>>() {
             @Override
             public void onSuccess(List<EventEntity> events) {
