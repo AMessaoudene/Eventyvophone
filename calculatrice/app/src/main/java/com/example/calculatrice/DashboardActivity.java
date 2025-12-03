@@ -137,10 +137,7 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
-        btnShowEvents.setOnClickListener(v -> startActivity(
-                new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId)
-                        .putExtra("onlyMine", true)));
+
         btnDeleteEvent.setOnClickListener(v -> confirmDelete());
     }
 

@@ -20,6 +20,16 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchMyEvents"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Show only my events"
+            android:padding="8dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:visibility="gone"/>
+
         <TextView
             android:id="@+id/tvEmptyEvents"
             android:layout_width="wrap_content"
@@ -33,6 +43,7 @@
             android:id="@+id/rvEvents"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_below="@id/switchMyEvents"
             android:padding="8dp"
             android:clipToPadding="false"/>
 

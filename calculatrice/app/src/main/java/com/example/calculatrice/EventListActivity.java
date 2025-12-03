@@ -24,6 +24,8 @@ public class EventListActivity extends AppCompatActivity {
 
     private android.widget.ProgressBar progressBar;
 
+    private com.google.android.material.switchmaterial.SwitchMaterial switchMyEvents;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,11 +36,13 @@ public class EventListActivity extends AppCompatActivity {
         if (userId == null) {
             userId = SessionManager.getUserId(this);
         }
-        showOnlyMine = getIntent().getBooleanExtra("onlyMine", false) && userId != null;
+        // Default: show all events. Toggle allows filtering.
+        showOnlyMine = false;
 
         rvEvents = findViewById(R.id.rvEvents);
         tvEmptyState = findViewById(R.id.tvEmptyEvents);
         progressBar = findViewById(R.id.progressBar);
+        switchMyEvents = findViewById(R.id.switchMyEvents);
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabAddEvent);
 
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
@@ -59,8 +63,16 @@ public class EventListActivity extends AppCompatActivity {
                 intent.putExtra("userId", userId);
                 startActivity(intent);
             });
+            
+            // Show toggle only if logged in
+            switchMyEvents.setVisibility(View.VISIBLE);
+            switchMyEvents.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                showOnlyMine = isChecked;
+                loadEvents();
+            });
         } else {
             fab.setVisibility(View.GONE);
+            switchMyEvents.setVisibility(View.GONE);
         }
 
         setupBottomNav();
