@@ -108,7 +108,19 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                     btnSendCode.setEnabled(true);
                     btnSendCode.setText("Send Reset Code");
                     etEmail.setError("Email not found");
-                    Toast.makeText(ForgotPasswordActivity.this, "Email not found (even with loose search)", Toast.LENGTH_SHORT).show();
+                    
+                    // DEBUG: Show what WAS found to help the user understand
+                    StringBuilder debugList = new StringBuilder();
+                    int count = 0;
+                    for (String e : existingUsers.values()) {
+                        if (count < 3) debugList.append(e).append(", ");
+                        count++;
+                    }
+                    if (count > 3) debugList.append("...");
+                    
+                    Toast.makeText(ForgotPasswordActivity.this, 
+                        "Email not found! DB contains " + count + " users: " + debugList.toString(), 
+                        Toast.LENGTH_LONG).show();
                 }
             }
 
