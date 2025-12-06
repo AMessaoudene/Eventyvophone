@@ -14,6 +14,20 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+public class EmailSender {
+
+    // Credentials provided by user
+    public static final String SENDER_EMAIL = "amessaoudenecontact@gmail.com"; 
+    public static final String SENDER_PASSWORD = "ciblgmkyoyphwsny"; 
+
+    public interface EmailCallback {
+        void onSuccess();
+        void onFailure(Exception e);
+    }
 
     public static void sendEmail(Context context, String recipientEmail, String subject, String body, EmailCallback callback) {
         if (SENDER_EMAIL.contains("your_email")) {
