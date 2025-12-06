@@ -129,15 +129,24 @@ public class EventListActivity extends AppCompatActivity {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 adapter.updateData(events);
                 boolean isEmpty = events == null || events.isEmpty();
-                tvEmptyState.setText(showOnlyMine ? "You have no events." : "No public events found.");
+                
+                String emptyMsg = showOnlyMine ? "You have no events." : "No public events found. (Check internet)";
+                tvEmptyState.setText(emptyMsg);
                 tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+                
+                if (isEmpty) {
+                    Toast.makeText(EventListActivity.this, showOnlyMine ? "No events found for you." : "No public events retrieved.", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onFailure(Exception e) {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
-                tvEmptyState.setText("Error loading events: " + e.getMessage());
+                String errorMsg = "Error loading events: " + e.getMessage();
+                tvEmptyState.setText(errorMsg);
                 tvEmptyState.setVisibility(View.VISIBLE);
+                Toast.makeText(EventListActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                e.printStackTrace();
             }
         };
 

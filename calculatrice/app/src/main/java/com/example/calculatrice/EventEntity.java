@@ -24,6 +24,8 @@ public class EventEntity implements Serializable {
     public String organizerId;
     public boolean hasParticipationForm;
 
+    public boolean isPublic = true; // Default to public
+
     public EventEntity() {} // Required for Firestore
 
     public EventEntity(String name, String startDate, String endDate,
@@ -41,5 +43,6 @@ public class EventEntity implements Serializable {
         this.imageUri = imageUri;
         this.organizerId = organizerId;
         this.hasParticipationForm = hasParticipationForm;
+        this.isPublic = true; // Explicitly separate from parameters but default to true
     }
 }
