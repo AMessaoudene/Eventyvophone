@@ -206,9 +206,13 @@ public class ForgotPasswordActivity extends AppCompatActivity {
             etConfirmPass.setError("Passwords do not match");
             return;
         }
+        
+        if (targetUserId == null) {
+            Toast.makeText(this, "Error: User ID missing. Restart flow.", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         // SAVE NEW PASSWORD TO FIRESTORE (Shadow Auth)
-        // Since we can't update Firebase Auth, we save it here so LoginActivity can check it.
         btnResetAndLogin.setEnabled(false);
         Toast.makeText(this, "Updating password...", Toast.LENGTH_SHORT).show();
 
@@ -220,8 +224,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
-                // If update fails (e.g. document doesn't exist yet?), try adding it first
-                 mockLoginUser(targetUserId); // Proceed anyway for now
+                 Toast.makeText(ForgotPasswordActivity.this, "Shadow update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                 mockLoginUser(targetUserId); // Proceed anyway
             }
         });
     }
@@ -246,8 +250,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         SessionManager.saveUser(ForgotPasswordActivity.this, uid, username);
         Toast.makeText(ForgotPasswordActivity.this, "Password updated & Logged in!", Toast.LENGTH_LONG).show();
         
-        Intent intent = new Intent(ForgotPasswordActivity.this, EventListActivity.class);
-        intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC); 
+        // Navigate to PROFILE as requested
+        Intent intent = new Intent(ForgotPasswordActivity.this, ProfileActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
