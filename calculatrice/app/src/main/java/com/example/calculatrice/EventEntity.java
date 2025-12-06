@@ -3,6 +3,7 @@ package com.example.calculatrice;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.Ignore;
 
 import java.io.Serializable;
 
@@ -28,6 +29,7 @@ public class EventEntity implements Serializable {
 
     public EventEntity() {} // Required for Firestore
 
+    @Ignore
     public EventEntity(String name, String startDate, String endDate,
                        String location, String meetLink, boolean isOnline,
                        boolean isFree, String description, String imageUri,
