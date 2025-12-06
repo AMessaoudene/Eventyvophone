@@ -10,7 +10,7 @@
     <application
         android:allowBackup="true"
         android:icon="@android:drawable/ic_dialog_info"
-        android:label="Eventyvophone"
+        android:label="Eventyvo"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
