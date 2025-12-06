@@ -116,21 +116,6 @@ public class FirestoreHelper {
     }
 
     public void updateEvent(EventEntity event, OnComplete<Void> callback) {
-        db.collection("events").document(event.id)
-                .set(event)
-                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
-    }
-
-    public void deleteEvent(String eventId, OnComplete<Void> callback) {
-        db.collection("events").document(eventId)
-                .delete()
-                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
-                .addOnFailureListener(callback::onFailure);
-    }
-
-    // Participation Operations
-
     public void addParticipation(ParticipationEntity participation, OnComplete<Void> callback) {
         String id = db.collection("participations").document().getId();
         participation.id = id;

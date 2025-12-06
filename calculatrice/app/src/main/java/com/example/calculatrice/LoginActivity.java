@@ -20,6 +20,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etPassword;
     private android.widget.ProgressBar progressBar;
     private FirebaseAuth mAuth;
+    private FirestoreHelper firestoreHelper;
     private boolean redirectToProfile;
 
     @Override
@@ -28,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
+        firestoreHelper = new FirestoreHelper();
         redirectToProfile = getIntent().getBooleanExtra(EXTRA_REDIRECT_TO_PROFILE, false);
 
         etEmail = findViewById(R.id.etUsername); // Reusing ID but treating as email
@@ -61,10 +63,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            // User is signed in, check if we need to redirect or just go to dashboard
-            // But wait, if they are signed in, we should probably just go to dashboard/profile
-            // unless they explicitly logged out.
-            // For now, let's just fetch and navigate to be safe and ensure session is fresh.
             fetchUserAndNavigate(currentUser.getUid());
         }
     }
@@ -79,20 +77,60 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         showLoading(true);
+        // 1. Try Standard Firebase Auth
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         fetchUserAndNavigate(mAuth.getCurrentUser().getUid());
                     } else {
-                        showLoading(false);
-                        Toast.makeText(this, "Authentication failed: " + task.getException().getMessage(),
-                                Toast.LENGTH_SHORT).show();
+                        // 2. Fallback: Try Shadow Auth (Firestore Check)
+                        loginWithFirestore(email, password, task.getException());
                     }
                 });
     }
 
+    private void loginWithFirestore(String email, String password, Exception originalAuthError) {
+        // First find the user by email
+        firestoreHelper.getUserByEmail(email, new FirestoreHelper.OnComplete<String>() {
+            @Override
+            public void onSuccess(String uid) {
+                // User exists, check password field
+                firestoreHelper.getUser(uid, new FirestoreHelper.OnComplete<User>() {
+                    @Override
+                    public void onSuccess(User user) {
+                        showLoading(false);
+                        // Check if password matches shadow password
+                        if (user != null && user.password != null && user.password.equals(password)) {
+                            // SHADOW LOGIN SUCCESS!
+                            Toast.makeText(LoginActivity.this, "Login Successful (Shadow Auth)", Toast.LENGTH_SHORT).show();
+                            SessionManager.saveUser(LoginActivity.this, uid, user.username);
+                            navigateAfterAuth();
+                            finish();
+                        } else {
+                            // Password mismatch: Show original error
+                            Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        showLoading(false);
+                        Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                showLoading(false);
+                // User not found
+                Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void fetchUserAndNavigate(String uid) {
-        new FirestoreHelper().getUser(uid, new FirestoreHelper.OnComplete<User>() {
+        firestoreHelper.getUser(uid, new FirestoreHelper.OnComplete<User>() {
             @Override
             public void onSuccess(User user) {
                 showLoading(false);
