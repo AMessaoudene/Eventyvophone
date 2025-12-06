@@ -153,16 +153,33 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         int codeInt = 100000 + r.nextInt(900000);
         generatedCode = String.valueOf(codeInt);
 
-        // Simulate sending email via Notification
-        // In a real app, this would call a backend API.
-        NotificationHelper.showNotification(this, "Reset Code", "Your verification code is: " + generatedCode);
-        
-        Toast.makeText(this, "Code sent to " + email + " (Check Notifications)", Toast.LENGTH_LONG).show();
+        // UI Feedback
+        Toast.makeText(this, "Sending email to " + email + "...", Toast.LENGTH_SHORT).show();
+        btnSendCode.setText("Sending...");
+        btnSendCode.setEnabled(false);
 
-        // Update UI
-        etEmail.setEnabled(false);
-        btnSendCode.setVisibility(View.GONE);
-        layoutVerifyAndReset.setVisibility(View.VISIBLE);
+        String subject = "Eventyvo Reset Code";
+        String body = "Your password reset code is: " + generatedCode + "\n\nIf you did not request this, please ignore this email.";
+
+        EmailSender.sendEmail(this, email, subject, body, new EmailSender.EmailCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(ForgotPasswordActivity.this, "Code sent to email!", Toast.LENGTH_LONG).show();
+                
+                // Update UI
+                etEmail.setEnabled(false);
+                btnSendCode.setVisibility(View.GONE);
+                layoutVerifyAndReset.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                btnSendCode.setEnabled(true);
+                btnSendCode.setText("Send Reset Code");
+                Toast.makeText(ForgotPasswordActivity.this, "Failed to send email: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
+        });
     }
 
     private void handleResetAndLogin() {
