@@ -108,6 +108,16 @@
                 android:textColor="#FFFFFF"/>
 
             <Button
+                android:id="@+id/btnAnalytics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View Analytics"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#9C27B0"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"/>
+
+            <Button
                 android:id="@+id/btnManageParticipation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

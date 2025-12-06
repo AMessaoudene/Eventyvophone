@@ -125,6 +125,7 @@ public class EventDetailActivity extends AppCompatActivity {
         TextView tvParticipation = findViewById(R.id.tvParticipationStatus);
         Button btnParticipate = findViewById(R.id.btnParticipate);
         Button btnManage = findViewById(R.id.btnManageParticipation);
+        Button btnAnalytics = findViewById(R.id.btnAnalytics);
         Button btnEdit = findViewById(R.id.btnEditEvent);
         Button btnDelete = findViewById(R.id.btnDeleteEvent);
 
@@ -174,6 +175,10 @@ public class EventDetailActivity extends AppCompatActivity {
         btnManage.setVisibility(canManage ? View.VISIBLE : View.GONE);
         btnManage.setOnClickListener(v -> openManageParticipation());
 
+        // Analytics Button Logic
+        btnAnalytics.setVisibility(canManage ? View.VISIBLE : View.GONE);
+        btnAnalytics.setOnClickListener(v -> showAnalyticsDialog());
+
         btnEdit.setVisibility(isOwner ? View.VISIBLE : View.GONE);
         btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
 
@@ -215,6 +220,47 @@ public class EventDetailActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ParticipationManageActivity.class);
         intent.putExtra("eventId", event.id);
         startActivity(intent);
+    }
+
+    private void showAnalyticsDialog() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        
+        firestoreHelper.getParticipations(event.id, new FirestoreHelper.OnComplete<java.util.List<ParticipationEntity>>() {
+            @Override
+            public void onSuccess(java.util.List<ParticipationEntity> list) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                
+                int total = list.size();
+                int accepted = 0;
+                int refused = 0;
+                int pending = 0;
+                
+                for (ParticipationEntity p : list) {
+                    if ("accepted".equalsIgnoreCase(p.status)) accepted++;
+                    else if ("refused".equalsIgnoreCase(p.status)) refused++;
+                    else pending++;
+                }
+                
+                StringBuilder sb = new StringBuilder();
+                sb.append("Total Requests: ").append(total).append("\n\n");
+                sb.append("✅ Accepted: ").append(accepted).append("\n");
+                sb.append("❌ Refused: ").append(refused).append("\n");
+                sb.append("⏳ Pending: ").append(pending).append("\n");
+                
+                new AlertDialog.Builder(EventDetailActivity.this)
+                        .setTitle("Event Analytics")
+                        .setMessage(sb.toString())
+                        .setPositiveButton("Close", null)
+                        .setNeutralButton("Manage", (dialog, which) -> openManageParticipation())
+                        .show();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(EventDetailActivity.this, "Failed to load analytics", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 
