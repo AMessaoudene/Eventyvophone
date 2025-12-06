@@ -31,7 +31,7 @@ public class DashboardActivity extends AppCompatActivity {
     private CheckBox cbParticipationForm;
     private Button btnPickPhoto;
     private Button btnCreateOrUpdateEvent;
-    private Button btnShowEvents;
+
     private Button btnDeleteEvent;
     private ImageView imgPreview;
     private Uri selectedImageUri;
@@ -92,7 +92,7 @@ public class DashboardActivity extends AppCompatActivity {
         cbParticipationForm = findViewById(R.id.cbParticipationForm);
         btnPickPhoto = findViewById(R.id.btnPickPhoto);
         btnCreateOrUpdateEvent = findViewById(R.id.btnCreateEvent);
-        btnShowEvents = findViewById(R.id.btnViewEvents);
+
         btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
         imgPreview = findViewById(R.id.imgPreview);
     }
@@ -138,9 +138,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         btnCreateOrUpdateEvent.setOnClickListener(v -> saveEvent());
 
-        btnShowEvents.setOnClickListener(v -> startActivity(
-                new Intent(this, EventListActivity.class)
-                        .putExtra("userId", userId)));
+
 
         btnDeleteEvent.setOnClickListener(v -> confirmDelete());
     }
