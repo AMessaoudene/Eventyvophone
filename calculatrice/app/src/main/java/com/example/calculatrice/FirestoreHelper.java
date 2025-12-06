@@ -21,9 +21,19 @@ public class FirestoreHelper {
         user.put("username", username);
         user.put("email", email);
         user.put("uid", uid);
+        user.put("password", ""); // Place holder for shadow auth
 
         db.collection("users").document(uid)
                 .set(user)
+                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    public void updatePassword(String uid, String newPassword, OnComplete<Void> callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("password", newPassword);
+        
+        db.collection("users").document(uid).update(updates)
                 .addOnSuccessListener(aVoid -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
