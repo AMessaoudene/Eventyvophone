@@ -45,6 +45,22 @@ public class FirestoreHelper {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    public void getUserByEmail(String email, OnComplete<String> callback) {
+        db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        String uid = queryDocumentSnapshots.getDocuments().get(0).getId();
+                        callback.onSuccess(uid);
+                    } else {
+                        callback.onFailure(new Exception("Email not found"));
+                    }
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     // Event Operations
 
     public void addEvent(EventEntity event, OnComplete<Void> callback) {
