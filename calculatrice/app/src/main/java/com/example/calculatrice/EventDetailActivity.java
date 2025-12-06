@@ -240,16 +240,33 @@ public class EventDetailActivity extends AppCompatActivity {
                     else if ("refused".equalsIgnoreCase(p.status)) refused++;
                     else pending++;
                 }
-                
-                StringBuilder sb = new StringBuilder();
-                sb.append("Total Requests: ").append(total).append("\n\n");
-                sb.append("✅ Accepted: ").append(accepted).append("\n");
-                sb.append("❌ Refused: ").append(refused).append("\n");
-                sb.append("⏳ Pending: ").append(pending).append("\n");
+
+                // Inflate Custom Dialog
+                View dialogView = getLayoutInflater().inflate(R.layout.dialog_analytics, null);
+                PieChartView pieChart = dialogView.findViewById(R.id.pieChart);
+                TextView tvAccepted = dialogView.findViewById(R.id.tvLegendAccepted);
+                TextView tvRefused = dialogView.findViewById(R.id.tvLegendRefused);
+                TextView tvPending = dialogView.findViewById(R.id.tvLegendPending);
+                TextView tvTitle = dialogView.findViewById(R.id.tvAnalyticsTitle);
+
+                tvTitle.setText("Analytics (" + total + " Total)");
+
+                // Set Data
+                float[] data = new float[] { accepted, refused, pending };
+                int[] colors = new int[] { 
+                    0xFF4CAF50, // Green
+                    0xFFF44336, // Red
+                    0xFFFF9800  // Orange
+                };
+                pieChart.setData(data, colors);
+
+                // Update Legend Text
+                tvAccepted.setText("● Accepted: " + accepted);
+                tvRefused.setText("● Refused: " + refused);
+                tvPending.setText("● Pending: " + pending);
                 
                 new AlertDialog.Builder(EventDetailActivity.this)
-                        .setTitle("Event Analytics")
-                        .setMessage(sb.toString())
+                        .setView(dialogView)
                         .setPositiveButton("Close", null)
                         .setNeutralButton("Manage", (dialog, which) -> openManageParticipation())
                         .show();
