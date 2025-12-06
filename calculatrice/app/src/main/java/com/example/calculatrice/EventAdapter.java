@@ -12,9 +12,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
+public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> implements android.widget.Filterable {
 
     private List<EventEntity> data;
+    private List<EventEntity> fullList; // Copy for filtering
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
@@ -27,11 +28,42 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     public EventAdapter(List<EventEntity> data) {
         this.data = data != null ? data : new ArrayList<>();
+        this.fullList = new ArrayList<>(this.data);
     }
 
     public void updateData(List<EventEntity> newData) {
         this.data = newData != null ? newData : new ArrayList<>();
+        this.fullList = new ArrayList<>(this.data);
         notifyDataSetChanged();
+    }
+
+    @Override
+    public android.widget.Filter getFilter() {
+        return new android.widget.Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                List<EventEntity> filteredList = new ArrayList<>();
+                if (constraint == null || constraint.length() == 0) {
+                    filteredList.addAll(fullList);
+                } else {
+                    String filterPattern = constraint.toString().toLowerCase().trim();
+                    for (EventEntity item : fullList) {
+                        if (item.name != null && item.name.toLowerCase().contains(filterPattern)) {
+                            filteredList.add(item);
+                        }
+                    }
+                }
+                FilterResults results = new FilterResults();
+                results.values = filteredList;
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                data = (List<EventEntity>) results.values;
+                notifyDataSetChanged();
+            }
+        };
     }
 
     @Override

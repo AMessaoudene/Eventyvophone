@@ -44,6 +44,15 @@
         android:padding="8dp"
         android:background="#4CAF50" />
 
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:queryHint="Search events..."
+        android:iconifiedByDefault="false"
+        android:background="#FFFFFF"
+        android:elevation="2dp"/>
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

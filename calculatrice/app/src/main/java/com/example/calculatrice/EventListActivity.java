@@ -96,6 +96,23 @@ public class EventListActivity extends AppCompatActivity {
         // Toggle Logic - Hide it! We use tabs now.
         switchMyEvents.setVisibility(View.GONE); 
 
+        // Search Logic
+        androidx.appcompat.widget.SearchView searchView = findViewById(R.id.searchView);
+        searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (adapter != null) {
+                    adapter.getFilter().filter(newText);
+                }
+                return true;
+            }
+        });
+
         setupBottomNav();
     }
 
