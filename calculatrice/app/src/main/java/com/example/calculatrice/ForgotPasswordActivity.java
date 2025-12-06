@@ -68,7 +68,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         btnSendCode.setEnabled(false);
         btnSendCode.setText("Checking...");
 
-        // Verify if user exists first
+        // 1. Try Direct Match
         firestoreHelper.getUserByEmail(email, new FirestoreHelper.OnComplete<String>() {
             @Override
             public void onSuccess(String uid) {
@@ -79,10 +79,45 @@ public class ForgotPasswordActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
+                // 2. Fallback: Try Fuzzy Match (Case Insensitive)
+                performFuzzySearch(email);
+            }
+        });
+    }
+
+    private void performFuzzySearch(String inputEmail) {
+        firestoreHelper.getAllUsers(new FirestoreHelper.OnComplete<java.util.Map<String, String>>() {
+            @Override
+            public void onSuccess(java.util.Map<String, String> existingUsers) {
+                String foundUid = null;
+                String normalizedInput = inputEmail.trim().toLowerCase();
+
+                for (java.util.Map.Entry<String, String> entry : existingUsers.entrySet()) {
+                    String dbEmail = entry.getValue();
+                    if (dbEmail != null && dbEmail.trim().toLowerCase().equals(normalizedInput)) {
+                        foundUid = entry.getKey();
+                        targetEmail = dbEmail; // Use the actual DB email
+                        break;
+                    }
+                }
+
+                if (foundUid != null) {
+                    targetUserId = foundUid;
+                    sendMockEmailCode(targetEmail);
+                } else {
+                    btnSendCode.setEnabled(true);
+                    btnSendCode.setText("Send Reset Code");
+                    etEmail.setError("Email not found");
+                    Toast.makeText(ForgotPasswordActivity.this, "Email not found (even with loose search)", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
                 btnSendCode.setEnabled(true);
                 btnSendCode.setText("Send Reset Code");
                 etEmail.setError("Email not found");
-                Toast.makeText(ForgotPasswordActivity.this, "Email not found in database", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ForgotPasswordActivity.this, "Error checking database: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

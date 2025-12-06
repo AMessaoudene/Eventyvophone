@@ -87,6 +87,21 @@ public class FirestoreHelper {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    public void getAllUsers(OnComplete<Map<String, String>> callback) {
+        db.collection("users").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Map<String, String> userEmails = new HashMap<>(); // UID -> Email
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String email = document.getString("email");
+                        if (email != null) {
+                            userEmails.put(document.getId(), email);
+                        }
+                    }
+                    callback.onSuccess(userEmails);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void getEventsByOrganizer(String organizerId, OnComplete<List<EventEntity>> callback) {
         db.collection("events").whereEqualTo("organizerId", organizerId).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
