@@ -101,16 +101,25 @@ public class FirestoreHelper {
         return db.collection("events")
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
+                        android.util.Log.e("FirestoreHelper", "Listen failed.", error);
                         callback.onFailure(error);
                         return;
                     }
 
                     List<EventEntity> events = new ArrayList<>();
                     if (value != null) {
+                        android.util.Log.d("FirestoreHelper", "Found " + value.size() + " documents in 'events'.");
                         for (QueryDocumentSnapshot document : value) {
-                            EventEntity event = document.toObject(EventEntity.class);
-                            events.add(event);
+                            try {
+                                EventEntity event = document.toObject(EventEntity.class);
+                                events.add(event);
+                            } catch (Exception e) {
+                                android.util.Log.e("FirestoreHelper", "Error parsing event: " + document.getId(), e);
+                                // Try to construct strictly manually to see what breaks or just Add corrupt placeholder
+                            }
                         }
+                    } else {
+                        android.util.Log.d("FirestoreHelper", "Snapshot value is null.");
                     }
                     callback.onSuccess(events);
                 });

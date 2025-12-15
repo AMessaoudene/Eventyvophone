@@ -178,6 +178,7 @@ public class EventListActivity extends AppCompatActivity {
                 public void onSuccess(List<EventEntity> events) {
                     if (progressBar != null) progressBar.setVisibility(View.GONE);
                     String debugMsg = "Mode: " + (showOnlyMine ? "MINE" : "PUBLIC") + "\nFetched: " + events.size();
+                    // android.util.Log.d("EventList", debugMsg); 
                     Toast.makeText(EventListActivity.this, debugMsg, Toast.LENGTH_LONG).show();
                     
                     adapter.updateData(events);
