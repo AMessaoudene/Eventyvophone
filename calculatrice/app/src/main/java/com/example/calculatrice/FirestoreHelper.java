@@ -84,7 +84,6 @@ public class FirestoreHelper {
 
     public void getEvents(OnComplete<List<EventEntity>> callback) {
         db.collection("events")
-                .orderBy("startDate") // Ensure consistent ordering
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<EventEntity> events = new ArrayList<>();
