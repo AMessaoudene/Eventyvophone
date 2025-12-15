@@ -98,7 +98,8 @@ public class ProfileActivity extends AppCompatActivity {
             showLoading(true);
 
             // Save to Firestore
-            firestoreHelper.addUser(userId, currentUser.username, currentUser.email, new FirestoreHelper.OnComplete<Void>() {
+            String pwdToSave = currentUser.password != null ? currentUser.password : "";
+            firestoreHelper.addUser(userId, currentUser.username, currentUser.email, pwdToSave, new FirestoreHelper.OnComplete<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     SessionManager.saveUser(ProfileActivity.this, userId, currentUser.username);
