@@ -173,31 +173,13 @@ public class EventListActivity extends AppCompatActivity {
         } else {
             // Use Real-time listener for Public events
             // We need to manage the listener lifecycle, but for now we just attach it
-            // Direct Debugging Query
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("events")
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            int rawCount = task.getResult().size();
-                            String msg = "RAW DEBUG: Found " + rawCount + " docs directly.";
-                            Toast.makeText(EventListActivity.this, msg, Toast.LENGTH_LONG).show();
-                            if (rawCount > 0) {
-                                // If raw count > 0 but helper returns 0, it's a parsing error
-                                tvEmptyState.setText(msg + " (Parsing needed)");
-                                tvEmptyState.setVisibility(View.VISIBLE);
-                            }
-                        } else {
-                            Toast.makeText(EventListActivity.this, "RAW DEBUG: Failed " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    });
-
             firestoreHelper.listenToEvents(new FirestoreHelper.OnComplete<List<EventEntity>>() {
                 @Override
                 public void onSuccess(List<EventEntity> events) {
                     if (progressBar != null) progressBar.setVisibility(View.GONE);
-                    String debugMsg = "Mode: " + (showOnlyMine ? "MINE" : "PUBLIC") + "\nFetched: " + events.size();
-                    Toast.makeText(EventListActivity.this, debugMsg, Toast.LENGTH_LONG).show();
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    // Standard user facing update
+                    // Toast.makeText(EventListActivity.this, "Events loaded", Toast.LENGTH_SHORT).show();
                     
                     adapter.updateData(events);
                     boolean isEmpty = events == null || events.isEmpty();
