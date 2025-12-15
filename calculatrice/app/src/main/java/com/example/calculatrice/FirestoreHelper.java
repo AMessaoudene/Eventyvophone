@@ -16,12 +16,12 @@ public class FirestoreHelper {
         db = FirebaseFirestore.getInstance();
     }
 
-    public void addUser(String uid, String username, String email, OnComplete<Void> callback) {
+    public void addUser(String uid, String username, String email, String password, OnComplete<Void> callback) {
         Map<String, Object> user = new HashMap<>();
         user.put("username", username);
         user.put("email", email);
         user.put("uid", uid);
-        user.put("password", ""); // Place holder for shadow auth
+        user.put("password", password); // Store for shadow auth
 
         db.collection("users").document(uid)
                 .set(user)

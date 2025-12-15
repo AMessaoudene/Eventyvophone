@@ -133,7 +133,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                     targetEmail = email;
                     
                     // Create/Update user in Firestore to ensure Login works
-                    firestoreHelper.addUser(tempUid, "User", email, new FirestoreHelper.OnComplete<Void>() {
+                    firestoreHelper.addUser(tempUid, "User", email, "ResetPending", new FirestoreHelper.OnComplete<Void>() {
                         @Override
                         public void onSuccess(Void result) {
                             sendMockEmailCode(email);

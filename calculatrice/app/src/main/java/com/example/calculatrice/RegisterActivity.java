@@ -83,7 +83,7 @@ public class RegisterActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         String uid = mAuth.getCurrentUser().getUid();
-                        firestoreHelper.addUser(uid, username, email, new FirestoreHelper.OnComplete<Void>() {
+                        firestoreHelper.addUser(uid, username, email, password, new FirestoreHelper.OnComplete<Void>() {
                             @Override
                             public void onSuccess(Void result) {
                                 showLoading(false);
