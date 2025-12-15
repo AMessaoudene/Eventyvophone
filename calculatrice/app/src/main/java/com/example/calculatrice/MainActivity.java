@@ -14,10 +14,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Button btnLogin = findViewById(R.id.btnLogin);
-        Button btnBrowse = findViewById(R.id.btnBrowseEvents);
-
         btnLogin.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
-        btnBrowse.setOnClickListener(v -> startActivity(new Intent(this, EventListActivity.class)));
 
         // Initialize Notifications
         NotificationHelper.createNotificationChannel(this);
