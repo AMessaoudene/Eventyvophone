@@ -250,8 +250,8 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         SessionManager.saveUser(ForgotPasswordActivity.this, uid, username);
         Toast.makeText(ForgotPasswordActivity.this, "Password updated & Logged in!", Toast.LENGTH_LONG).show();
         
-        // Navigate to PROFILE as requested
-        Intent intent = new Intent(ForgotPasswordActivity.this, ProfileActivity.class);
+        // Navigate to MainActivity (Home) to match new flow
+        Intent intent = new Intent(ForgotPasswordActivity.this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
