@@ -22,6 +22,7 @@ public class EventDetailActivity extends AppCompatActivity {
     private EventEntity event;
     private int participationCount;
     private String userId;
+    private android.widget.ProgressBar progressBar;
 
     private final androidx.activity.result.ActivityResultLauncher<Intent> scanLauncher = registerForActivityResult(
             new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
@@ -54,8 +55,6 @@ public class EventDetailActivity extends AppCompatActivity {
                     });
                 }
             });
-
-    private android.widget.ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
