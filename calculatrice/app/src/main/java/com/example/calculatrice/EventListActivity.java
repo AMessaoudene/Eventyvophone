@@ -171,7 +171,32 @@ public class EventListActivity extends AppCompatActivity {
         if (showOnlyMine && userId != null) {
             firestoreHelper.getEventsByOrganizer(userId, callback);
         } else {
-            firestoreHelper.getEvents(callback);
+            // Use Real-time listener for Public events
+            // We need to manage the listener lifecycle, but for now we just attach it
+            firestoreHelper.listenToEvents(new FirestoreHelper.OnComplete<List<EventEntity>>() {
+                @Override
+                public void onSuccess(List<EventEntity> events) {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    String debugMsg = "Mode: " + (showOnlyMine ? "MINE" : "PUBLIC") + "\nFetched: " + events.size();
+                    Toast.makeText(EventListActivity.this, debugMsg, Toast.LENGTH_LONG).show();
+                    
+                    adapter.updateData(events);
+                    boolean isEmpty = events == null || events.isEmpty();
+                    
+                    String emptyMsg = showOnlyMine ? "You have no events." : "No public events found. (Check internet)";
+                    tvEmptyState.setText(emptyMsg);
+                    tvEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    String errorMsg = "Error loading events: " + e.getMessage();
+                    tvEmptyState.setText(errorMsg);
+                    tvEmptyState.setVisibility(View.VISIBLE);
+                    Toast.makeText(EventListActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 

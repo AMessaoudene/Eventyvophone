@@ -83,6 +83,7 @@ public class FirestoreHelper {
     }
 
     public void getEvents(OnComplete<List<EventEntity>> callback) {
+        // Fallback for one-shot, but usually listener is better
         db.collection("events")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -94,6 +95,25 @@ public class FirestoreHelper {
                     callback.onSuccess(events);
                 })
                 .addOnFailureListener(callback::onFailure);
+    }
+
+    public com.google.firebase.firestore.ListenerRegistration listenToEvents(OnComplete<List<EventEntity>> callback) {
+        return db.collection("events")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error);
+                        return;
+                    }
+
+                    List<EventEntity> events = new ArrayList<>();
+                    if (value != null) {
+                        for (QueryDocumentSnapshot document : value) {
+                            EventEntity event = document.toObject(EventEntity.class);
+                            events.add(event);
+                        }
+                    }
+                    callback.onSuccess(events);
+                });
     }
 
     public void getAllUsers(OnComplete<Map<String, String>> callback) {
