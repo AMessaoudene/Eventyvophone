@@ -144,6 +144,7 @@ public class EventListActivity extends AppCompatActivity {
             @Override
             public void onSuccess(List<EventEntity> events) {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(EventListActivity.this, "DEBUG: Fetched " + events.size() + " events.", Toast.LENGTH_SHORT).show();
                 adapter.updateData(events);
                 boolean isEmpty = events == null || events.isEmpty();
                 

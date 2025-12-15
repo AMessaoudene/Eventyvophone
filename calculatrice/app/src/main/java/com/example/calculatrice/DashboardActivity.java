@@ -307,9 +307,16 @@ public class DashboardActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(Void result) {
                     showLoading(false);
-                    Toast.makeText(DashboardActivity.this, "Event created!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DashboardActivity.this, "Event created! ID: " + e.id, Toast.LENGTH_LONG).show();
                     NotificationHelper.showNotification(DashboardActivity.this, "Event Created", "Event '" + name + "' has been created.");
                     clearForm();
+                    
+                    // Auto-redirect to list to see it immediately
+                    android.content.Intent intent = new android.content.Intent(DashboardActivity.this, EventListActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.putExtra("userId", userId);
+                    startActivity(intent);
+                    finish();
                 }
 
                 @Override
