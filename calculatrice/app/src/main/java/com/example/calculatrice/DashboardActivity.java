@@ -276,6 +276,7 @@ public class DashboardActivity extends AppCompatActivity {
             eventToEdit.isFree = free;
             eventToEdit.hasParticipationForm = participation;
             eventToEdit.imageUri = imageUriToSave;
+            eventToEdit.isPublic = true; // Ensure event is public
             
             firestoreHelper.updateEvent(eventToEdit, new FirestoreHelper.OnComplete<Void>() {
                 @Override
@@ -300,6 +301,7 @@ public class DashboardActivity extends AppCompatActivity {
         } else {
             EventEntity e = new EventEntity(name, start, end, location, meet, online, free,
                     desc, imageUriToSave, userId, participation);
+            e.isPublic = true; // Ensure event is public
             
             firestoreHelper.addEvent(e, new FirestoreHelper.OnComplete<Void>() {
                 @Override

@@ -325,7 +325,10 @@ public class EventDetailActivity extends AppCompatActivity {
                 if (SessionManager.getUserId(this) == null) {
                     startActivity(new Intent(this, MainActivity.class));
                 } else {
-                    startActivity(new Intent(this, DashboardActivity.class));
+                    Intent intent = new Intent(this, EventListActivity.class);
+                    intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC);
+                    intent.putExtra("userId", SessionManager.getUserId(this));
+                    startActivity(intent);
                 }
                 return true;
             } else if (id == R.id.nav_profile) {
