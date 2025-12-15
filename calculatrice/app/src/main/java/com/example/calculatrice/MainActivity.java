@@ -29,7 +29,8 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         String userId = SessionManager.getUserId(this);
         if (userId != null) {
-            Intent intent = new Intent(this, DashboardActivity.class);
+            Intent intent = new Intent(this, EventListActivity.class);
+            intent.putExtra(EventListActivity.EXTRA_MODE, EventListActivity.MODE_PUBLIC);
             intent.putExtra("userId", userId);
             startActivity(intent);
             finish();

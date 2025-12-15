@@ -125,6 +125,9 @@ public class ParticipationActivity extends AppCompatActivity {
                     });
                 }
 
+                android.content.Intent intent = new android.content.Intent(ParticipationActivity.this, EventListActivity.class);
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
                 finish();
             }
 

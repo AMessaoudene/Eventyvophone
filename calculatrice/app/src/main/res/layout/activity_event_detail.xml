@@ -108,6 +108,15 @@
                 android:textColor="#FFFFFF"/>
 
             <Button
+                android:id="@+id/btnShare"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Share Event"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#FF9800"
+                android:textColor="#FFFFFF"/>
+
+            <Button
                 android:id="@+id/btnAnalytics"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

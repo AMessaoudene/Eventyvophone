@@ -28,8 +28,30 @@ public class EventDetailActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     String content = result.getData().getStringExtra("SCAN_RESULT");
-                    Toast.makeText(this, "Scanned: " + content, Toast.LENGTH_LONG).show();
-                    // TODO: Verify participation code
+                    if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+                    firestoreHelper.getParticipation(content, new FirestoreHelper.OnComplete<ParticipationEntity>() {
+                        @Override
+                        public void onSuccess(ParticipationEntity p) {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            if (p != null && p.eventId != null && p.eventId.equals(event.id)) {
+                                String msg = "Valid Ticket!\nPerson: " + p.fullName + "\nStatus: " + p.status;
+                                int icon = "accepted".equalsIgnoreCase(p.status) ? android.R.drawable.checkbox_on_background : android.R.drawable.ic_delete;
+                                new AlertDialog.Builder(EventDetailActivity.this)
+                                        .setTitle("Verification Result")
+                                        .setIcon(icon)
+                                        .setMessage(msg)
+                                        .setPositiveButton("OK", null)
+                                        .show();
+                            } else {
+                                Toast.makeText(EventDetailActivity.this, "Invalid Ticket: Not for this event", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            Toast.makeText(EventDetailActivity.this, "Scan Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             });
 
@@ -124,6 +146,7 @@ public class EventDetailActivity extends AppCompatActivity {
         TextView tvDescription = findViewById(R.id.tvDescription);
         TextView tvParticipation = findViewById(R.id.tvParticipationStatus);
         Button btnParticipate = findViewById(R.id.btnParticipate);
+        Button btnShare = findViewById(R.id.btnShare);
         Button btnManage = findViewById(R.id.btnManageParticipation);
         Button btnAnalytics = findViewById(R.id.btnAnalytics);
         Button btnEdit = findViewById(R.id.btnEditEvent);
@@ -170,6 +193,18 @@ public class EventDetailActivity extends AppCompatActivity {
 
         btnParticipate.setVisibility(event.hasParticipationForm ? View.VISIBLE : View.GONE);
         btnParticipate.setOnClickListener(v -> openParticipationForm());
+
+        btnShare.setOnClickListener(v -> {
+            String text = "Check out this event: " + event.name + "\n" +
+                    "When: " + event.startDate + "\n" +
+                    "About: " + event.description; 
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, text);
+            sendIntent.setType("text/plain");
+            Intent shareIntent = Intent.createChooser(sendIntent, null);
+            startActivity(shareIntent);
+        });
 
         boolean canManage = isOwner && event.hasParticipationForm;
         btnManage.setVisibility(canManage ? View.VISIBLE : View.GONE);

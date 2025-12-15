@@ -169,6 +169,19 @@ public class FirestoreHelper {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    public void getParticipation(String participationId, OnComplete<ParticipationEntity> callback) {
+        db.collection("participations").document(participationId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        ParticipationEntity participation = documentSnapshot.toObject(ParticipationEntity.class);
+                        callback.onSuccess(participation);
+                    } else {
+                        callback.onFailure(new Exception("Participation not found"));
+                    }
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void updateParticipation(ParticipationEntity participation, OnComplete<Void> callback) {
         db.collection("participations").document(participation.id)
                 .set(participation)

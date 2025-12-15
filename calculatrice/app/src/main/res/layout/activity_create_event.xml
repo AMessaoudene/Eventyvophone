@@ -27,6 +27,13 @@
             android:hint="End Date" />
 
         <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:minLines="3"/>
+
+        <EditText
             android:id="@+id/etEventLocation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -50,13 +57,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Free Entry"/>
-
-        <EditText
-            android:id="@+id/etDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Description"
-            android:minLines="3"/>
 
         <CheckBox
             android:id="@+id/cbParticipationForm"

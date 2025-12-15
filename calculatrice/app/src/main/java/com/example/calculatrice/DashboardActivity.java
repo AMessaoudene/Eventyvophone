@@ -283,6 +283,11 @@ public class DashboardActivity extends AppCompatActivity {
                     showLoading(false);
                     Toast.makeText(DashboardActivity.this, "Event updated", Toast.LENGTH_SHORT).show();
                     NotificationHelper.showNotification(DashboardActivity.this, "Event Updated", "Event '" + name + "' has been updated.");
+                    android.content.Intent intent = new android.content.Intent(DashboardActivity.this, EventListActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    // Preserve user ID if possible, though EventListActivity might handle it via SessionManager
+                    intent.putExtra("userId", userId);
+                    startActivity(intent);
                     finish();
                 }
 

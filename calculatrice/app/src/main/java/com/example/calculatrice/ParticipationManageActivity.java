@@ -172,7 +172,7 @@ public class ParticipationManageActivity extends AppCompatActivity implements Pa
     }
 
     private String generateQrPayload(ParticipationEntity entity) {
-        return "P" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        return entity.id;
     }
 }
 
